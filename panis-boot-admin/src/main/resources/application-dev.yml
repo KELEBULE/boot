@@ -1,0 +1,49 @@
+# Spring Boot 应用配置
+server:
+  port: 9999
+
+spring:
+  # 数据库配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/panis_boot?useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ""  # 如果Redis没有密码就留空
+      database: 1
+      connect-timeout: 10000ms
+      lettuce:
+        pool:
+          enabled: true
+
+  # 邮件配置
+  mail:
+    host: smtp.qq.com  # QQ邮箱SMTP服务器
+    port: 587
+    username: 3549652890@qq.com  # QQ邮箱
+    password: tpsaqucvrlyfchde  # QQ邮箱授权码
+    protocol: smtp
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+# MinIO 对象存储配置
+oss:
+  name: minio
+  bucket-name: panis
+  endpoint: "http://localhost:9000"  # MinIO API地址
+  access-key: "minioadmin"           # MinIO用户名
+  secret-key: "minioadmin"           # MinIO密码
+  sync-delete: true
+  expiry: 3600
