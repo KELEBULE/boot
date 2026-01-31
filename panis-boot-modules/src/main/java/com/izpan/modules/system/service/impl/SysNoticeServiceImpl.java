@@ -47,9 +47,9 @@ public class SysNoticeServiceImpl extends ServiceImpl<SysNoticeMapper, SysNotice
         LambdaQueryWrapper<SysNotice> queryWrapper = new LambdaQueryWrapper<SysNotice>()
                 .eq(ObjectUtils.isNotEmpty(sysNoticeBO.getCategory()), SysNotice::getCategory, sysNoticeBO.getCategory())
                 .like(ObjectUtils.isNotEmpty(sysNoticeBO.getTitle()), SysNotice::getTitle, sysNoticeBO.getTitle())
+                .between(ObjectUtils.isNotEmpty(sysNoticeBO.getReleaseStartTime()) && ObjectUtils.isNotEmpty(sysNoticeBO.getReleaseEndTime()), SysNotice::getReleaseTime, sysNoticeBO.getReleaseStartTime(), sysNoticeBO.getReleaseEndTime())
                 .orderByDesc(SysNotice::getCreateTime);
         return baseMapper.selectPage(pageQuery.buildPage(), queryWrapper);
     }
 
 }
-

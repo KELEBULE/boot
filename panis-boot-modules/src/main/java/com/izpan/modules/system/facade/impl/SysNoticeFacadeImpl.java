@@ -55,8 +55,10 @@ public class SysNoticeFacadeImpl implements ISysNoticeFacade {
 
     @Override
     public RPage<SysNoticeVO> listSysNoticePage(PageQuery pageQuery, SysNoticeSearchDTO sysNoticeSearchDTO) {
-        SysNoticeBO sysNoticeBO = CglibUtil.convertObj(sysNoticeSearchDTO, SysNoticeBO::new);
-        IPage<SysNotice> sysNoticeIPage = sysNoticeService.listSysNoticePage(pageQuery, sysNoticeBO);
+        PageQuery safePageQuery = pageQuery != null ? pageQuery : new PageQuery();
+        SysNoticeBO sysNoticeBO = sysNoticeSearchDTO != null ? 
+            CglibUtil.convertObj(sysNoticeSearchDTO, SysNoticeBO::new) : new SysNoticeBO();
+        IPage<SysNotice> sysNoticeIPage = sysNoticeService.listSysNoticePage(safePageQuery, sysNoticeBO);
         return RPage.build(sysNoticeIPage, SysNoticeVO::new);
     }
 
@@ -77,6 +79,10 @@ public class SysNoticeFacadeImpl implements ISysNoticeFacade {
     @Transactional
     public boolean update(SysNoticeUpdateDTO sysNoticeUpdateDTO) {
         SysNoticeBO sysNoticeBO = CglibUtil.convertObj(sysNoticeUpdateDTO, SysNoticeBO::new);
+        // 如果发布日期未设置，则使用当前时间
+        if (sysNoticeBO.getReleaseTime() == null) {
+            sysNoticeBO.setReleaseTime(java.time.LocalDateTime.now());
+        }
         return sysNoticeService.updateById(sysNoticeBO);
     }
 

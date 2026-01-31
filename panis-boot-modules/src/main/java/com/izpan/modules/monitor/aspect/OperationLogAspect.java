@@ -135,7 +135,7 @@ public class OperationLogAspect {
 
         // ================= 防重复提交 Begin =================
         RepeatSubmit repeatSubmit = ms.getMethod().getDeclaredAnnotation(RepeatSubmit.class);
-        int interval = 5;
+        int interval = 1;
         String message = "重复请求，请稍后重试";
 
         if (null != repeatSubmit) {

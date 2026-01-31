@@ -25,6 +25,7 @@ import com.izpan.infrastructure.page.PageQuery;
 import com.izpan.infrastructure.page.RPage;
 import com.izpan.modules.system.domain.dto.notice.SysNoticeAddDTO;
 import com.izpan.modules.system.domain.dto.notice.SysNoticeDeleteDTO;
+import com.izpan.modules.system.domain.dto.notice.SysNoticePageDTO;
 import com.izpan.modules.system.domain.dto.notice.SysNoticeSearchDTO;
 import com.izpan.modules.system.domain.dto.notice.SysNoticeUpdateDTO;
 import com.izpan.modules.system.domain.vo.SysNoticeVO;
@@ -56,11 +57,24 @@ public class SysNoticeController {
     @NonNull
     private ISysNoticeFacade sysNoticeFacade;
 
-    @GetMapping("/page")
+    @PostMapping("/page")
     @SaCheckPermission("sys:notice:page")
     @Operation(operationId = "1", summary = "获取通知公告列表")
-    public Result<RPage<SysNoticeVO>> page(@Parameter(description = "分页对象", required = true) @Valid PageQuery pageQuery,
-                                           @Parameter(description = "查询对象") SysNoticeSearchDTO sysNoticeSearchDTO) {
+    public Result<RPage<SysNoticeVO>> page(@Parameter(description = "分页查询对象", required = true) @Valid @RequestBody SysNoticePageDTO sysNoticePageDTO) {
+        PageQuery pageQuery = new PageQuery();
+        if (sysNoticePageDTO != null) {
+            pageQuery.setPage(sysNoticePageDTO.getPage());
+            pageQuery.setPageSize(sysNoticePageDTO.getPageSize());
+        }
+        SysNoticeSearchDTO sysNoticeSearchDTO = new SysNoticeSearchDTO();
+        if (sysNoticePageDTO != null) {
+            sysNoticeSearchDTO.setCategory(sysNoticePageDTO.getCategory());
+            sysNoticeSearchDTO.setTitle(sysNoticePageDTO.getTitle());
+            if (sysNoticePageDTO.getTimeRange() != null && sysNoticePageDTO.getTimeRange().length >= 2) {
+                sysNoticeSearchDTO.setReleaseStartTime(sysNoticePageDTO.getTimeRange()[0]);
+                sysNoticeSearchDTO.setReleaseEndTime(sysNoticePageDTO.getTimeRange()[1]);
+            }
+        }
         return Result.data(sysNoticeFacade.listSysNoticePage(pageQuery, sysNoticeSearchDTO));
     }
 

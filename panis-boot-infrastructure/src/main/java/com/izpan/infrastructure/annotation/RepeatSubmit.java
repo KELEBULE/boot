@@ -36,11 +36,11 @@ import java.lang.annotation.*;
 public @interface RepeatSubmit {
 
     /**
-     * 间隔时间(单位:s)，默认 5 秒
+     * 间隔时间(单位:s)，默认 1 秒
      * <p>
      * -1：表示不限制
      */
-    int interval() default 5;
+    int interval() default 1;
 
     /**
      * 提示消息

@@ -49,4 +49,10 @@ public class SysNoticeSearchDTO implements Serializable {
     @Schema(description = "标题")
     private String title;
 
+    @Schema(description = "发布开始时间")
+    private String releaseStartTime;
+
+    @Schema(description = "发布结束时间")
+    private String releaseEndTime;
+
 }

@@ -182,7 +182,7 @@ public class AuthenticationFacadeImpl implements IAuthenticationFacade {
             Map<Long, List<String>> menuPermissionMap = transform(sysPermissionBOS);
             // 返回路由对象
             return SysUserRouteVO.builder()
-                    .home("home")
+                    .home("workbench")
                     // 组装路由集合
                     .routes(initMenuRoute(0L, sysMenuBOS, menuPermissionMap))
                     .build();

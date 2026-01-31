@@ -45,4 +45,14 @@ public class SysNoticeBO extends SysNotice {
      */
     private List<Long> ids;
 
+    /**
+     * 发布开始时间
+     */
+    private String releaseStartTime;
+
+    /**
+     * 发布结束时间
+     */
+    private String releaseEndTime;
+
 }

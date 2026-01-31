@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.izpan.modules.workorder.repository.mapper.WorkOrderMapper">
+
+    <resultMap id="WorkOrderResultMap" type="com.izpan.modules.workorder.domain.entity.WorkOrder">
+        <result column="order_id" property="orderId"/>
+        <result column="order_code" property="orderCode"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="alarm_id" property="alarmId"/>
+        <result column="order_type" property="orderType"/>
+        <result column="order_source" property="orderSource"/>
+        <result column="fault_time" property="faultTime"/>
+        <result column="fault_description" property="faultDescription"/>
+        <result column="repair_requirement" property="repairRequirement"/>
+        <result column="priority" property="priority"/>
+        <result column="creator_id" property="creatorId"/>
+        <result column="assignee_id" property="assigneeId"/>
+        <result column="processor_id" property="processorId"/>
+        <result column="reviewer_id" property="reviewerId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="plan_start_time" property="planStartTime"/>
+        <result column="plan_end_time" property="planEndTime"/>
+        <result column="actual_start_time" property="actualStartTime"/>
+        <result column="actual_end_time" property="actualEndTime"/>
+        <result column="order_status" property="orderStatus"/>
+        <result column="handle_duration" property="handleDuration"/>
+        <result column="repair_result" property="repairResult"/>
+        <result column="repair_cost" property="repairCost"/>
+        <result column="spare_parts" property="spareParts"/>
+        <result column="review_result" property="reviewResult"/>
+        <result column="review_time" property="reviewTime"/>
+        <result column="evaluation_score" property="evaluationScore"/>
+        <result column="evaluation_remark" property="evaluationRemark"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+</mapper>

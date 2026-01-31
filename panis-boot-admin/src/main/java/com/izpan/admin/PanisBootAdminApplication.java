@@ -13,7 +13,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @ClassName com.izpan.admin.PanisBootAdminApplication
  * @CreateTime 2023/7/6 - 11:11
  */
-
 @EnableScheduling
 @MapperScan("com.izpan.modules.**.repository.mapper")
 @SpringBootApplication(scanBasePackages = "com.izpan.**")
