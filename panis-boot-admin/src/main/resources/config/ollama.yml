@@ -1,0 +1,11 @@
+# Ollama配置
+ai:
+  ollama:
+    # Ollama API地址
+    url: http://localhost:11434
+    # 默认模型
+    default-model: gemma3:12b
+    # 连接超时时间(毫秒)
+    connect-timeout: 30000
+    # 读取超时时间(毫秒)
+    read-timeout: 60000

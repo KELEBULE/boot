@@ -30,9 +30,11 @@ public class SysNoticePageDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Schema(description = "当前页码")
+    @Builder.Default
     private Integer page = 1;
 
     @Schema(description = "每页显示数量")
+    @Builder.Default
     private Integer pageSize = 20;
 
     @Schema(description = "分类 1:通知 2:公告")

@@ -1,12 +1,15 @@
 package com.izpan.infrastructure.holder;
 
-import cn.dev33.satoken.exception.NotLoginException;
-import cn.dev33.satoken.exception.NotWebContextException;
-import cn.dev33.satoken.stp.StpUtil;
-import com.izpan.common.domain.LoginUser;
+import java.util.Set;
+
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
+import com.izpan.common.domain.LoginUser;
+
+import cn.dev33.satoken.exception.NotLoginException;
+import cn.dev33.satoken.exception.NotWebContextException;
+import cn.dev33.satoken.exception.SaTokenContextException;
+import cn.dev33.satoken.stp.StpUtil;
 
 /**
  * 全局用户
@@ -32,8 +35,16 @@ public class GlobalUserHolder {
      */
     public static LoginUser getUser() {
         try {
+            // 检查是否已登录
+            if (!StpUtil.isLogin()) {
+                return LoginUser.builder().id(-1L).realName("系统用户").build();
+            }
             return (LoginUser) StpUtil.getSession().get("user");
-        } catch (NotLoginException | NotWebContextException exception) {
+        } catch (NotLoginException | NotWebContextException | SaTokenContextException exception) {
+            // 在异步线程或非Web环境中返回默认用户
+            return LoginUser.builder().id(-1L).realName("系统用户").build();
+        } catch (Exception e) {
+            // 其他异常也返回默认用户
             return LoginUser.builder().id(-1L).realName("系统用户").build();
         }
     }

@@ -2,6 +2,8 @@
 mybatis-plus:
   mapper-locations: classpath:com/izpan/modules/*/repository/mapper/*Mapper.xml
   typeAliasesPackage: com.izpan.modules.**.domain.entity
+  configuration:
+    map-underscore-to-camel-case: true
   global-config:
     banner: false
     db-config:

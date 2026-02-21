@@ -47,3 +47,9 @@ oss:
   secret-key: "minioadmin"           # MinIO密码
   sync-delete: true
   expiry: 3600
+
+# Ollama配置
+ai:
+  ollama:
+    url: http://localhost:11434
+    default-model: gemma3:12b

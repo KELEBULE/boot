@@ -1,6 +1,13 @@
 package com.izpan.modules.system.facade.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.izpan.common.constants.BasePermissionConstant;
 import com.izpan.common.domain.Options;
 import com.izpan.common.util.CglibUtil;
 import com.izpan.infrastructure.page.PageQuery;
@@ -14,13 +21,12 @@ import com.izpan.modules.system.domain.entity.SysRole;
 import com.izpan.modules.system.domain.vo.SysRoleExportVO;
 import com.izpan.modules.system.domain.vo.SysRoleVO;
 import com.izpan.modules.system.facade.ISysRoleFacade;
+import com.izpan.modules.system.service.ISysRolePermissionService;
 import com.izpan.modules.system.service.ISysRoleService;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 角色管理 门面接口实现层
@@ -30,13 +36,16 @@ import java.util.List;
  * @ClassName com.izpan.modules.system.facade.impl.SysRoleFacadeImpl
  * @CreateTime 2023-07-23
  */
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SysRoleFacadeImpl implements ISysRoleFacade {
 
     @NonNull
     private ISysRoleService sysRoleService;
+
+    @NonNull
+    private ISysRolePermissionService sysRolePermissionService;
 
     @Override
     public RPage<SysRoleVO> listSysRolePage(PageQuery pageQuery, SysRoleSearchDTO sysRoleSearchDTO) {
@@ -55,7 +64,21 @@ public class SysRoleFacadeImpl implements ISysRoleFacade {
     @Transactional
     public boolean add(SysRoleAddDTO sysRoleAddDTO) {
         SysRoleBO sysRoleBO = CglibUtil.convertObj(sysRoleAddDTO, SysRoleBO::new);
-        return sysRoleService.save(sysRoleBO);
+        boolean saved = sysRoleService.save(sysRoleBO);
+        if (saved && sysRoleBO.getId() != null) {
+            assignBasePermissions(sysRoleBO.getId());
+        }
+        return saved;
+    }
+
+    private void assignBasePermissions(Long roleId) {
+        try {
+            List<Long> permissionIds = new ArrayList<>(BasePermissionConstant.BASE_PERMISSION_IDS);
+            sysRolePermissionService.addPermissionForRoleId(roleId, permissionIds);
+            log.info("角色创建成功，自动分配基础权限，roleId: {}, permissionIds: {}", roleId, permissionIds);
+        } catch (Exception e) {
+            log.error("自动分配基础权限失败，roleId: {}", roleId, e);
+        }
     }
 
     @Override
@@ -77,9 +100,9 @@ public class SysRoleFacadeImpl implements ISysRoleFacade {
         List<SysRoleBO> allRole = sysRoleService.queryAllRoleList();
         return allRole.stream()
                 .map(item -> Options.<Long>builder()
-                        .label(item.getRoleName())
-                        .value(item.getId())
-                        .build())
+                .label(item.getRoleName())
+                .value(item.getId())
+                .build())
                 .toList();
     }
 

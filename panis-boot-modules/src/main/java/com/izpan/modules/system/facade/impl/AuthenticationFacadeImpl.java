@@ -1,22 +1,35 @@
 package com.izpan.modules.system.facade.impl;
 
-import cn.dev33.satoken.stp.StpUtil;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.google.common.collect.Lists;
 import com.izpan.common.api.ResultCode;
+import com.izpan.common.constants.RequestConstant;
 import com.izpan.common.constants.SystemCacheConstant;
 import com.izpan.common.domain.KVPairs;
 import com.izpan.common.exception.BizException;
 import com.izpan.common.exception.RouteException;
 import com.izpan.common.pool.StringPools;
 import com.izpan.common.util.CglibUtil;
+import com.izpan.common.util.IPUtil;
 import com.izpan.infrastructure.holder.GlobalUserHolder;
 import com.izpan.infrastructure.util.GsonUtil;
 import com.izpan.infrastructure.util.RedisUtil;
+import com.izpan.infrastructure.util.ServletHolderUtil;
 import com.izpan.modules.monitor.domain.entity.MonLogsLogin;
-import com.izpan.modules.monitor.service.IMonLogsLoginService;
 import com.izpan.modules.system.domain.bo.SysMenuBO;
 import com.izpan.modules.system.domain.bo.SysPermissionBO;
-import com.izpan.modules.system.domain.entity.SysPermission;
 import com.izpan.modules.system.domain.bo.SysUserBO;
 import com.izpan.modules.system.domain.dto.EmailCodeLoginDTO;
 import com.izpan.modules.system.domain.dto.EmailRegisterDTO;
@@ -31,23 +44,13 @@ import com.izpan.modules.system.service.ISysRoleMenuService;
 import com.izpan.modules.system.service.ISysRolePermissionService;
 import com.izpan.modules.system.service.ISysUserService;
 import com.izpan.modules.system.service.impl.SysUserServiceImpl;
-import java.time.LocalDateTime;
 
-import com.izpan.common.util.IPUtil;
+import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.extra.servlet.JakartaServletUtil;
-import com.izpan.common.constants.RequestConstant;
-import com.izpan.infrastructure.util.ServletHolderUtil;
-
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 用户认证门面接口实现层
@@ -77,8 +80,8 @@ public class AuthenticationFacadeImpl implements IAuthenticationFacade {
     /**
      * 初始化菜单路由
      *
-     * @param parentId          父级菜单ID
-     * @param sysMenus          菜单列表
+     * @param parentId 父级菜单ID
+     * @param sysMenus 菜单列表
      * @param menuPermissionMap 菜单对应的权限按钮 Map 结构
      * @return {@link SysUserRouteVO.Route} 路由对象列表
      * @author payne.zhuang
@@ -221,7 +224,7 @@ public class AuthenticationFacadeImpl implements IAuthenticationFacade {
         loginLogs.setUserName(user.getUserName());
         loginLogs.setStatus(StringPools.ONE);
         loginLogs.setMessage("登录成功");
-        
+
         // 设置IP和userAgent信息
         HttpServletRequest request = ServletHolderUtil.getRequest();
         String ip = JakartaServletUtil.getClientIP(request);
