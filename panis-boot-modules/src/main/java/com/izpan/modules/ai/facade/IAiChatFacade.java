@@ -27,6 +27,7 @@ import com.izpan.modules.ai.domain.dto.chat.AiChatResponseDTO;
 import com.izpan.modules.ai.domain.dto.file.AiFileDeleteDTO;
 import com.izpan.modules.ai.domain.dto.file.AiFileUploadDTO;
 import com.izpan.modules.ai.domain.vo.AiChatVO;
+import com.izpan.modules.ai.domain.vo.AiSessionVO;
 
 /**
  * AI聊天 门面接口层
@@ -43,6 +44,8 @@ public interface IAiChatFacade {
     SseEmitter streamChat(AiChatRequestDTO request);
 
     List<AiChatVO> getSessionHistory(String sessionId);
+
+    List<AiSessionVO> getSessionList(Long userId);
 
     List<String> getAvailableModels();
 

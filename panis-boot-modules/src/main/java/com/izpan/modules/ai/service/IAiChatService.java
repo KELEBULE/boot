@@ -45,5 +45,7 @@ public interface IAiChatService {
 
     void updateSessionLastActiveTime(String sessionId, Long userId, String model);
 
+    void updateSessionLastActiveTime(String sessionId, Long userId, String model, String title);
+
     void clearSessionHistory(String sessionId);
 }

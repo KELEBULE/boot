@@ -18,27 +18,32 @@
  */
 package com.izpan.modules.ai.facade.impl;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.izpan.infrastructure.holder.GlobalUserHolder;
 import com.izpan.modules.ai.domain.dto.chat.AiChatRequestDTO;
 import com.izpan.modules.ai.domain.dto.chat.AiChatResponseDTO;
 import com.izpan.modules.ai.domain.dto.file.AiFileDeleteDTO;
 import com.izpan.modules.ai.domain.dto.file.AiFileUploadDTO;
 import com.izpan.modules.ai.domain.entity.AiChatHistory;
-import com.izpan.modules.ai.domain.entity.AiFileUpload;
+import com.izpan.modules.ai.domain.entity.AiChatSession;
 import com.izpan.modules.ai.domain.vo.AiChatVO;
+import com.izpan.modules.ai.domain.vo.AiSessionVO;
 import com.izpan.modules.ai.facade.IAiChatFacade;
 import com.izpan.modules.ai.repository.mapper.AiChatHistoryMapper;
+import com.izpan.modules.ai.repository.mapper.AiChatSessionMapper;
 import com.izpan.modules.ai.repository.mapper.AiFileUploadMapper;
 import com.izpan.modules.ai.service.IAiChatService;
 import com.izpan.modules.ai.service.IAiFileService;
+
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import java.util.List;
 
 /**
  * AI聊天 门面接口实现层
@@ -60,6 +65,9 @@ public class AiChatFacadeImpl implements IAiChatFacade {
 
     @NonNull
     private AiChatHistoryMapper historyMapper;
+
+    @NonNull
+    private AiChatSessionMapper sessionMapper;
 
     @NonNull
     private AiFileUploadMapper fileUploadMapper;
@@ -90,6 +98,29 @@ public class AiChatFacadeImpl implements IAiChatFacade {
                 .tokensUsed(history.getTokensUsed())
                 .processingTime(history.getProcessingTime())
                 .createTime(history.getCreateTime())
+                .build())
+                .toList();
+    }
+
+    @Override
+    public List<AiSessionVO> getSessionList(Long userId) {
+        Long currentUserId = GlobalUserHolder.getUserId();
+        LambdaQueryWrapper<AiChatSession> queryWrapper = new LambdaQueryWrapper<AiChatSession>()
+                .eq(AiChatSession::getUserId, currentUserId)
+                .orderByDesc(AiChatSession::getLastActiveTime);
+
+        IPage<AiChatSession> page = sessionMapper.selectPage(
+                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, 50),
+                queryWrapper
+        );
+        return page.getRecords().stream()
+                .map(session -> AiSessionVO.builder()
+                .id(session.getId())
+                .sessionId(session.getSessionId())
+                .title(session.getTitle())
+                .model(session.getModel())
+                .lastActiveTime(session.getLastActiveTime())
+                .createTime(session.getCreateTime())
                 .build())
                 .toList();
     }

@@ -18,9 +18,21 @@
  */
 package com.izpan.modules.ai.service.impl;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.izpan.infrastructure.holder.GlobalUserHolder;
 import com.izpan.modules.ai.client.OllamaClient;
@@ -31,17 +43,8 @@ import com.izpan.modules.ai.domain.entity.AiChatSession;
 import com.izpan.modules.ai.repository.mapper.AiChatHistoryMapper;
 import com.izpan.modules.ai.repository.mapper.AiChatSessionMapper;
 import com.izpan.modules.ai.service.IAiChatService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * AI聊天 Service 服务接口实现层
@@ -92,7 +95,7 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
 
         saveChatHistory(actualSessionId, "user", request.getMessage(), null, null);
         saveChatHistory(actualSessionId, "assistant", reply, null, processingTime);
-        updateSessionLastActiveTime(actualSessionId, GlobalUserHolder.getUserId(), request.getModel());
+        updateSessionLastActiveTime(actualSessionId, GlobalUserHolder.getUserId(), request.getModel(), request.getMessage());
 
         return AiChatResponseDTO.builder()
                 .reply(reply)
@@ -113,10 +116,13 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
         List<Map<String, String>> history = getSessionHistory(actualSessionId);
         String prompt = ollamaClient.buildPrompt(request.getMessage(), history);
 
-        saveChatHistory(actualSessionId, "user", request.getMessage(), null, null);
-
         final Long userId = GlobalUserHolder.getUserId();
         final String model = request.getModel();
+        final String userMessage = request.getMessage();
+
+        updateSessionLastActiveTime(actualSessionId, userId, model, userMessage);
+
+        saveChatHistory(actualSessionId, "user", request.getMessage(), null, null);
 
         CompletableFuture.runAsync(() -> {
             try {
@@ -136,7 +142,7 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
 
                 Long processingTime = System.currentTimeMillis() - startTime;
                 saveChatHistory(actualSessionId, "assistant", fullResponse.toString(), null, processingTime);
-                updateSessionLastActiveTime(actualSessionId, userId, model);
+                updateSessionLastActiveTime(actualSessionId, userId, model, userMessage);
 
             } catch (Exception e) {
                 log.error("流式聊天失败", e);
@@ -189,30 +195,51 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
 
     @Override
     public void updateSessionLastActiveTime(String sessionId, Long userId, String model) {
+        updateSessionLastActiveTime(sessionId, userId, model, null);
+    }
+
+    @Override
+    public void updateSessionLastActiveTime(String sessionId, Long userId, String model, String title) {
         LambdaQueryWrapper<AiChatSession> queryWrapper = new LambdaQueryWrapper<AiChatSession>()
                 .eq(AiChatSession::getSessionId, sessionId);
 
         AiChatSession session = sessionMapper.selectOne(queryWrapper);
         if (session == null) {
+            String sessionTitle = title != null ? truncateTitle(title) : "新对话";
             session = AiChatSession.builder()
                     .sessionId(sessionId)
                     .userId(userId)
                     .model(model)
-                    .title("新对话")
+                    .title(sessionTitle)
                     .lastActiveTime(LocalDateTime.now())
                     .build();
             sessionMapper.insert(session);
         } else {
             session.setLastActiveTime(LocalDateTime.now());
+            if (title != null && "新对话".equals(session.getTitle())) {
+                session.setTitle(truncateTitle(title));
+            }
             sessionMapper.updateById(session);
         }
     }
 
+    private String truncateTitle(String title) {
+        if (title == null) {
+            return "新对话";
+        }
+        return title.length() > 50 ? title.substring(0, 50) + "..." : title;
+    }
+
     @Override
     public void clearSessionHistory(String sessionId) {
-        LambdaQueryWrapper<AiChatHistory> queryWrapper = new LambdaQueryWrapper<AiChatHistory>()
+        LambdaQueryWrapper<AiChatHistory> historyQueryWrapper = new LambdaQueryWrapper<AiChatHistory>()
                 .eq(AiChatHistory::getSessionId, sessionId);
-        historyMapper.delete(queryWrapper);
+        historyMapper.delete(historyQueryWrapper);
+
+        LambdaQueryWrapper<AiChatSession> sessionQueryWrapper = new LambdaQueryWrapper<AiChatSession>()
+                .eq(AiChatSession::getSessionId, sessionId);
+        sessionMapper.delete(sessionQueryWrapper);
+
         sessionHistoryCache.remove(sessionId);
     }
 

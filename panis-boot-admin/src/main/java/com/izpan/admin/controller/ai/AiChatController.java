@@ -25,6 +25,7 @@ import com.izpan.modules.ai.domain.dto.chat.AiChatResponseDTO;
 import com.izpan.modules.ai.domain.dto.file.AiFileDeleteDTO;
 import com.izpan.modules.ai.domain.dto.file.AiFileUploadDTO;
 import com.izpan.modules.ai.domain.vo.AiChatVO;
+import com.izpan.modules.ai.domain.vo.AiSessionVO;
 import com.izpan.modules.ai.facade.IAiChatFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -91,6 +92,14 @@ public class AiChatController {
     public Result<List<AiChatVO>> getSessionHistory(
             @Parameter(description = "会话ID") @PathVariable String sessionId) {
         return Result.data(aiChatFacade.getSessionHistory(sessionId));
+    }
+
+    @GetMapping("/sessions")
+//    @SaCheckPermission("ai:chat:sessions")
+    @Operation(operationId = "8", summary = "获取会话列表")
+    public Result<List<AiSessionVO>> getSessionList(
+            @Parameter(description = "用户ID") @RequestParam(required = false) Long userId) {
+        return Result.data(aiChatFacade.getSessionList(userId));
     }
 
     @DeleteMapping("/session/{sessionId}")
