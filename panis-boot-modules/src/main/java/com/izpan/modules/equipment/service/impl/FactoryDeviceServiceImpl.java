@@ -1,24 +1,28 @@
 package com.izpan.modules.equipment.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.izpan.infrastructure.page.PageQuery;
-import com.izpan.modules.equipment.domain.entity.DevicePart;
-import com.izpan.modules.equipment.domain.entity.FactoryDevice;
-import com.izpan.modules.equipment.domain.dto.FactoryDeviceAddDTO;
-import com.izpan.modules.equipment.domain.dto.FactoryDeviceDeleteDTO;
-import com.izpan.modules.equipment.domain.dto.FactoryDeviceSearchDTO;
-import com.izpan.modules.equipment.domain.dto.FactoryDeviceUpdateDTO;
-import com.izpan.modules.equipment.repository.mapper.DevicePartMapper;
-import com.izpan.modules.equipment.repository.mapper.FactoryDeviceMapper;
-import com.izpan.modules.equipment.service.IFactoryDeviceService;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.izpan.common.exception.BusinessException;
+import com.izpan.infrastructure.page.PageQuery;
+import com.izpan.modules.equipment.domain.dto.FactoryDeviceAddDTO;
+import com.izpan.modules.equipment.domain.dto.FactoryDeviceDeleteDTO;
+import com.izpan.modules.equipment.domain.dto.FactoryDeviceSearchDTO;
+import com.izpan.modules.equipment.domain.dto.FactoryDeviceUpdateDTO;
+import com.izpan.modules.equipment.domain.entity.DevicePart;
+import com.izpan.modules.equipment.domain.entity.FactoryDevice;
+import com.izpan.modules.equipment.domain.vo.DevicePartTreeVO;
+import com.izpan.modules.equipment.repository.mapper.DevicePartMapper;
+import com.izpan.modules.equipment.repository.mapper.FactoryDeviceMapper;
+import com.izpan.modules.equipment.service.IFactoryDeviceService;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +33,7 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
     @Override
     public IPage<FactoryDevice> listFactoryDevicePage(PageQuery pageQuery, FactoryDeviceSearchDTO searchDTO) {
         LambdaQueryWrapper<FactoryDevice> queryWrapper = new LambdaQueryWrapper<>();
-        
+
         queryWrapper.like(StringUtils.isNotBlank(searchDTO.getDeviceCode()), FactoryDevice::getDeviceCode, searchDTO.getDeviceCode())
                 .like(StringUtils.isNotBlank(searchDTO.getDeviceName()), FactoryDevice::getDeviceName, searchDTO.getDeviceName())
                 .eq(searchDTO.getDeviceStatus() != null, FactoryDevice::getDeviceStatus, searchDTO.getDeviceStatus())
@@ -47,7 +51,18 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
     }
 
     @Override
+    public List<DevicePartTreeVO> getDevicePartTreeByLocationId(Long locationId) {
+        return baseMapper.selectDevicePartTreeByLocationId(locationId);
+    }
+
+    @Override
     public boolean addFactoryDevice(FactoryDeviceAddDTO addDTO) {
+        LambdaQueryWrapper<FactoryDevice> checkWrapper = new LambdaQueryWrapper<>();
+        checkWrapper.eq(FactoryDevice::getDeviceCode, addDTO.getDeviceCode());
+        if (baseMapper.selectCount(checkWrapper) > 0) {
+            throw new BusinessException("设备编码已存在: " + addDTO.getDeviceCode());
+        }
+
         FactoryDevice device = FactoryDevice.builder()
                 .deviceCode(addDTO.getDeviceCode())
                 .deviceName(addDTO.getDeviceName())
@@ -99,11 +114,11 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
         if (ids == null || ids.isEmpty()) {
             return false;
         }
-        
+
         for (Long deviceId : ids) {
             deleteDevicePartsByDeviceId(deviceId);
         }
-        
+
         return removeByIds(ids);
     }
 
@@ -113,14 +128,14 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
         if (ids == null || ids.isEmpty()) {
             return false;
         }
-        
+
         for (Long deviceId : ids) {
             deleteDevicePartsByDeviceId(deviceId);
         }
-        
+
         return removeByIds(ids);
     }
-    
+
     private void deleteDevicePartsByDeviceId(Long deviceId) {
         LambdaQueryWrapper<DevicePart> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DevicePart::getDeviceId, deviceId);

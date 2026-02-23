@@ -16,14 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.izpan.common.util;
+
+import java.util.List;
 
 import com.google.common.base.Splitter;
 import com.izpan.common.pool.StringPools;
-import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 字符串工具类
@@ -33,7 +33,6 @@ import java.util.List;
  * @ClassName com.izpan.common.util.StringUtil
  * @CreateTime 2024/7/21 - 19:09
  */
-
 @Slf4j
 public class StringUtil {
 
@@ -53,7 +52,6 @@ public class StringUtil {
         return bool ? StringPools.ONE : StringPools.ZERO;
     }
 
-
     /**
      * 字符串转 List<Long>
      *
@@ -69,13 +67,16 @@ public class StringUtil {
     /**
      * 字符串转 List<Long>
      *
-     * @param str       字符串
+     * @param str 字符串
      * @param separator 分隔符
      * @return {@link List }<{@link Long }> 集合
      * @author payne.zhuang
      * @CreateTime 2024-11-05 - 14:34:46
      */
     public static List<Long> toLongList(String str, String separator) {
+        if (str == null || str.isEmpty()) {
+            return List.of();
+        }
         return Splitter.on(separator)
                 .trimResults()
                 .omitEmptyStrings()
@@ -100,13 +101,16 @@ public class StringUtil {
     /**
      * 字符串转 List<String> 集合
      *
-     * @param str       字符串
+     * @param str 字符串
      * @param separator 分隔符
      * @return {@link List }<{@link String }> 集合
      * @author payne.zhuang
      * @CreateTime 2024-11-06 - 16:15:23
      */
     public static List<String> toStringList(String str, String separator) {
+        if (str == null || str.isEmpty()) {
+            return List.of();
+        }
         return Splitter.on(separator)
                 .trimResults()
                 .omitEmptyStrings()
@@ -128,7 +132,7 @@ public class StringUtil {
     /**
      * List<String> 转字符串
      *
-     * @param list      集合
+     * @param list 集合
      * @param separator 分隔符
      * @return {@link String }
      * @author payne.zhuang

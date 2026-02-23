@@ -1,14 +1,17 @@
 package com.izpan.modules.workorder.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.izpan.infrastructure.domain.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 
 import java.io.Serial;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
@@ -19,153 +22,101 @@ import java.math.BigDecimal;
  * @ClassName com.izpan.modules.workorder.domain.entity.WorkOrder
  * @CreateTime 2026-01-27
  */
-
 @Data
-@SuperBuilder
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("device_work_order")
-public class WorkOrder extends BaseEntity {
+public class WorkOrder implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 工单ID
-     */
+    @TableId(type = IdType.AUTO)
+    @JsonProperty("orderId")
     private Long orderId;
 
-    /**
-     * 工单编号
-     */
+    @JsonProperty("orderCode")
     private String orderCode;
 
-    /**
-     * 设备ID
-     */
+    @JsonProperty("deviceId")
     private Long deviceId;
 
-    /**
-     * 关联告警ID
-     */
+    @JsonProperty("alarmId")
     private Long alarmId;
 
-    /**
-     * 工单类型 1-维修 2-保养 3-巡检 4-校准
-     */
+    @JsonProperty("orderType")
     private Integer orderType;
 
-    /**
-     * 工单来源 1-告警生成 2-计划任务 3-手动创建
-     */
+    @JsonProperty("orderSource")
     private Integer orderSource;
 
-    /**
-     * 故障时间
-     */
+    @JsonProperty("faultTime")
     private String faultTime;
 
-    /**
-     * 故障描述
-     */
+    @JsonProperty("faultDescription")
     private String faultDescription;
 
-    /**
-     * 修复要求
-     */
+    @JsonProperty("repairRequirement")
     private String repairRequirement;
 
-    /**
-     * 优先级 1-紧急 2-高 3-中 4-低
-     */
+    @JsonProperty("priority")
     private Integer priority;
 
-    /**
-     * 创建人ID
-     */
+    @JsonProperty("creatorId")
     private Long creatorId;
 
-    /**
-     * 指派处理人ID
-     */
+    @JsonProperty("assigneeId")
     private Long assigneeId;
 
-    /**
-     * 实际处理人ID
-     */
+    @JsonProperty("processorId")
     private Long processorId;
 
-    /**
-     * 审核人ID
-     */
+    @JsonProperty("reviewerId")
     private Long reviewerId;
 
-    /**
-     * 计划开始时间
-     */
+    @JsonProperty("createTime")
+    private String createTime;
+
+    @JsonProperty("planStartTime")
     private String planStartTime;
 
-    /**
-     * 计划完成时间
-     */
+    @JsonProperty("planEndTime")
     private String planEndTime;
 
-    /**
-     * 实际开始时间
-     */
+    @JsonProperty("actualStartTime")
     private String actualStartTime;
 
-    /**
-     * 实际完成时间
-     */
+    @JsonProperty("actualEndTime")
     private String actualEndTime;
 
-    /**
-     * 工单状态 0-待处理 1-处理中 2-待审核 3-已完成 4-已取消
-     */
+    @JsonProperty("orderStatus")
     private Integer orderStatus;
 
-    /**
-     * 处理耗时(分钟)
-     */
+    @JsonProperty("handleDuration")
     private Integer handleDuration;
 
-    /**
-     * 维修结果
-     */
+    @JsonProperty("repairResult")
     private String repairResult;
 
-    /**
-     * 维修费用
-     */
+    @JsonProperty("repairCost")
     private BigDecimal repairCost;
 
-    /**
-     * 更换备件
-     */
+    @JsonProperty("spareParts")
     private String spareParts;
 
-    /**
-     * 审核结果
-     */
+    @JsonProperty("reviewResult")
     private String reviewResult;
 
-    /**
-     * 审核时间
-     */
+    @JsonProperty("reviewTime")
     private String reviewTime;
 
-    /**
-     * 评价分数(1-5)
-     */
+    @JsonProperty("evaluationScore")
     private Integer evaluationScore;
 
-    /**
-     * 评价备注
-     */
+    @JsonProperty("evaluationRemark")
     private String evaluationRemark;
-    
-    // 重写deleted字段，使用@TableField(exist = false)来忽略逻辑删除
-    @TableField(exist = false)
-    private Integer deleted;
+
+    @JsonProperty("updateTime")
+    private String updateTime;
 }

@@ -50,4 +50,10 @@ public class WorkOrderSearchDTO implements Serializable {
 
     @Schema(description = "工单状态 0-待处理 1-处理中 2-待审核 3-已完成 4-已取消")
     private Integer orderStatus;
+
+    @Schema(description = "创建时间开始")
+    private String createTimeStart;
+
+    @Schema(description = "创建时间结束")
+    private String createTimeEnd;
 }

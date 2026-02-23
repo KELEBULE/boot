@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.izpan.modules.workorder.repository.mapper.WorkOrderLogMapper">
+
+    <resultMap id="WorkOrderLogResultMap" type="com.izpan.modules.workorder.domain.entity.WorkOrderLog">
+        <id column="log_id" property="logId"/>
+        <result column="order_id" property="orderId"/>
+        <result column="order_code" property="orderCode"/>
+        <result column="action_type" property="actionType"/>
+        <result column="from_status" property="fromStatus"/>
+        <result column="to_status" property="toStatus"/>
+        <result column="from_assignee" property="fromAssignee"/>
+        <result column="to_assignee" property="toAssignee"/>
+        <result column="action_remark" property="actionRemark"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="real_name" property="operatorName"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectWorkOrderLogsByOrderId" resultMap="WorkOrderLogResultMap">
+        SELECT 
+            wol.log_id,
+            wol.order_id,
+            wol.order_code,
+            wol.action_type,
+            wol.from_status,
+            wol.to_status,
+            wol.from_assignee,
+            wol.to_assignee,
+            wol.action_remark,
+            wol.operator_id,
+            wol.create_time,
+            su.real_name
+        FROM device_work_order_log wol
+        LEFT JOIN sys_user su ON CAST(wol.operator_id AS UNSIGNED) = su.id
+        WHERE wol.order_id = #{orderId}
+        ORDER BY wol.create_time ASC
+    </select>
+
+</mapper>

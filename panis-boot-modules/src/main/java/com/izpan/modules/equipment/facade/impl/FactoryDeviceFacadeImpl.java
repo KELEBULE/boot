@@ -10,6 +10,7 @@ import com.izpan.modules.equipment.domain.dto.FactoryDeviceSearchDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceUpdateDTO;
 import com.izpan.modules.equipment.domain.entity.DevicePart;
 import com.izpan.modules.equipment.domain.entity.FactoryDevice;
+import com.izpan.modules.equipment.domain.vo.DevicePartTreeVO;
 import com.izpan.modules.equipment.domain.vo.DevicePartVO;
 import com.izpan.modules.equipment.domain.vo.FactoryDeviceVO;
 import com.izpan.modules.equipment.facade.IFactoryDeviceFacade;
@@ -68,6 +69,11 @@ public class FactoryDeviceFacadeImpl implements IFactoryDeviceFacade {
                 .collect(Collectors.toList());
         vo.setChildren(partVOList);
         return vo;
+    }
+
+    @Override
+    public List<DevicePartTreeVO> getDevicePartTreeByLocationId(Long locationId) {
+        return factoryDeviceService.getDevicePartTreeByLocationId(locationId);
     }
 
     @Override

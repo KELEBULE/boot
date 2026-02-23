@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.izpan.modules.equipment.repository.mapper.FactoryInfoMapper">
+
+    <resultMap id="FactoryAreaTreeVOResultMap" type="com.izpan.modules.equipment.domain.vo.FactoryAreaTreeVO">
+        <result column="unique_key" property="uniqueKey"/>
+        <result column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="code" property="code"/>
+        <result column="type" property="type"/>
+        <collection property="children" ofType="com.izpan.modules.equipment.domain.vo.FactoryAreaTreeVO">
+            <result column="child_unique_key" property="uniqueKey"/>
+            <result column="child_id" property="id"/>
+            <result column="child_name" property="name"/>
+            <result column="child_code" property="code"/>
+            <result column="child_type" property="type"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectFactoryAreaTree" resultMap="FactoryAreaTreeVOResultMap">
+        SELECT 
+            CONCAT('factory_', fi.factory_id) AS unique_key,
+            fi.factory_id AS id,
+            fi.factory_name AS name,
+            fi.factory_code AS code,
+            'factory' AS type,
+            CONCAT('area_', fa.area_id) AS child_unique_key,
+            fa.area_id AS child_id,
+            fa.area_name AS child_name,
+            fa.location_code AS child_code,
+            'area' AS child_type
+        FROM factory_info fi
+        LEFT JOIN factory_area fa ON fi.factory_id = fa.factory_id AND fa.area_status = 1
+        WHERE fi.status = 1
+        ORDER BY fi.factory_id, fa.area_order
+    </select>
+
+</mapper>

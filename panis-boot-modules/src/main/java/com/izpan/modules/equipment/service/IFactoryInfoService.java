@@ -8,6 +8,7 @@ import com.izpan.modules.equipment.domain.dto.FactoryInfoAddDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryInfoDeleteDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryInfoSearchDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryInfoUpdateDTO;
+import com.izpan.modules.equipment.domain.vo.FactoryAreaTreeVO;
 
 import java.util.List;
 
@@ -18,6 +19,8 @@ public interface IFactoryInfoService extends IService<FactoryInfo> {
     FactoryInfo getFactoryInfoById(Long id);
 
     List<FactoryInfo> listAllFactoryInfo();
+
+    List<FactoryAreaTreeVO> getFactoryAreaTree();
 
     boolean addFactoryInfo(FactoryInfoAddDTO addDTO);
 

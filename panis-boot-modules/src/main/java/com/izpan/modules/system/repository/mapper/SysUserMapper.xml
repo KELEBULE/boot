@@ -75,16 +75,21 @@
         SELECT <include refid="UserColumnList" /> FROM
             sys_user su
         WHERE
-        <if test="bo.orgIds.toString().contains('-1')">
-            NOT EXISTS ( SELECT 1 FROM sys_user_org suo WHERE suo.user_id = su.id AND suo.is_deleted = 0 )
-        </if>
-        <if test="!bo.orgIds.toString().contains('-1')">
-            EXISTS ( SELECT 1 FROM sys_user_org suo WHERE suo.user_id = su.id AND suo.is_deleted = 0 AND suo.org_id IN
-            <foreach collection="bo.orgIds" item="orgId" open="(" separator="," close=")">
-                #{orgId}
-            </foreach>
-            )
-        </if>
+        <choose>
+            <when test="bo.orgIds == null or bo.orgIds.size() == 0">
+                1=1
+            </when>
+            <when test="bo.orgIds.toString().contains('-1')">
+                NOT EXISTS ( SELECT 1 FROM sys_user_org suo WHERE suo.user_id = su.id AND suo.is_deleted = 0 )
+            </when>
+            <otherwise>
+                EXISTS ( SELECT 1 FROM sys_user_org suo WHERE suo.user_id = su.id AND suo.is_deleted = 0 AND suo.org_id IN
+                <foreach collection="bo.orgIds" item="orgId" open="(" separator="," close=")">
+                    #{orgId}
+                </foreach>
+                )
+            </otherwise>
+        </choose>
         <if test="bo.userName != null and bo.userName != ''">
             AND su.user_name LIKE CONCAT(#{bo.userName}, '%')
         </if>

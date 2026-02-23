@@ -2,6 +2,7 @@ package com.izpan.admin.controller.system;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.izpan.common.api.Result;
+import com.izpan.infrastructure.annotation.RepeatSubmit;
 import com.izpan.infrastructure.page.PageQuery;
 import com.izpan.infrastructure.page.RPage;
 import com.izpan.modules.system.domain.dto.user.*;
@@ -34,8 +35,9 @@ public class SysUserController {
     @NonNull
     private ISysUserFacade sysUserFacade;
 
-    @GetMapping("/page")
+    @RequestMapping(value = "/page", method = {RequestMethod.GET, RequestMethod.POST})
     @SaCheckPermission("sys:user:page")
+    @RepeatSubmit(interval = -1)
     @Operation(operationId = "1", summary = "获取用户管理列表")
     public Result<RPage<SysUserVO>> page(@Parameter(description = "分页对象", required = true) @Valid PageQuery pageQuery,
                                          @Parameter(description = "查询对象") SysUserSearchDTO sysUserSearchDTO) {

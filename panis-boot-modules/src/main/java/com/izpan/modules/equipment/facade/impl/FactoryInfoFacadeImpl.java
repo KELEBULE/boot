@@ -9,6 +9,7 @@ import com.izpan.modules.equipment.domain.dto.FactoryInfoDeleteDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryInfoSearchDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryInfoUpdateDTO;
 import com.izpan.modules.equipment.domain.entity.FactoryInfo;
+import com.izpan.modules.equipment.domain.vo.FactoryAreaTreeVO;
 import com.izpan.modules.equipment.domain.vo.FactoryInfoVO;
 import com.izpan.modules.equipment.facade.IFactoryInfoFacade;
 import com.izpan.modules.equipment.service.IFactoryInfoService;
@@ -44,10 +45,14 @@ public class FactoryInfoFacadeImpl implements IFactoryInfoFacade {
 
     @Override
     public List<FactoryInfoVO> listAllFactoryInfo() {
-        List<FactoryInfo> factoryInfoList = factoryInfoService.listAllFactoryInfo();
-        return factoryInfoList.stream()
+        return factoryInfoService.listAllFactoryInfo().stream()
                 .map(factoryInfo -> BeanUtil.copyProperties(factoryInfo, FactoryInfoVO.class))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FactoryAreaTreeVO> getFactoryAreaTree() {
+        return factoryInfoService.getFactoryAreaTree();
     }
 
     @Override

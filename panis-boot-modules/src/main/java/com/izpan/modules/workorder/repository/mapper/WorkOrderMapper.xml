@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.izpan.modules.workorder.repository.mapper.WorkOrderMapper">
+
+    <resultMap id="WorkOrderResultMap" type="com.izpan.modules.workorder.domain.entity.WorkOrder">
+        <id column="order_id" property="orderId"/>
+        <result column="order_code" property="orderCode"/>
+        <result column="device_id" property="deviceId"/>
+        <result column="alarm_id" property="alarmId"/>
+        <result column="order_type" property="orderType"/>
+        <result column="order_source" property="orderSource"/>
+        <result column="fault_time" property="faultTime"/>
+        <result column="fault_description" property="faultDescription"/>
+        <result column="repair_requirement" property="repairRequirement"/>
+        <result column="priority" property="priority"/>
+        <result column="creator_id" property="creatorId"/>
+        <result column="assignee_id" property="assigneeId"/>
+        <result column="processor_id" property="processorId"/>
+        <result column="reviewer_id" property="reviewerId"/>
+        <result column="plan_start_time" property="planStartTime"/>
+        <result column="plan_end_time" property="planEndTime"/>
+        <result column="actual_start_time" property="actualStartTime"/>
+        <result column="actual_end_time" property="actualEndTime"/>
+        <result column="order_status" property="orderStatus"/>
+        <result column="handle_duration" property="handleDuration"/>
+        <result column="repair_result" property="repairResult"/>
+        <result column="repair_cost" property="repairCost"/>
+        <result column="spare_parts" property="spareParts"/>
+        <result column="review_result" property="reviewResult"/>
+        <result column="review_time" property="reviewTime"/>
+        <result column="evaluation_score" property="evaluationScore"/>
+        <result column="evaluation_remark" property="evaluationRemark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <resultMap id="WorkOrderVOResultMap" type="com.izpan.modules.workorder.domain.vo.WorkOrderVO" extends="WorkOrderResultMap">
+        <result column="device_code" property="deviceCode"/>
+        <result column="device_name" property="deviceName"/>
+        <result column="creator_name" property="creatorName"/>
+        <result column="assignee_name" property="assigneeName"/>
+        <result column="processor_name" property="processorName"/>
+        <result column="reviewer_name" property="reviewerName"/>
+    </resultMap>
+
+    <select id="listWorkOrderPage" resultMap="WorkOrderVOResultMap">
+        SELECT 
+            wo.*,
+            fd.device_code,
+            fd.device_name,
+            cu.real_name AS creator_name,
+            au.real_name AS assignee_name,
+            pu.real_name AS processor_name,
+            ru.real_name AS reviewer_name
+        FROM device_work_order wo
+        LEFT JOIN factory_device fd ON wo.device_id = fd.device_id
+        LEFT JOIN sys_user cu ON wo.creator_id = cu.id
+        LEFT JOIN sys_user au ON wo.assignee_id = au.id
+        LEFT JOIN sys_user pu ON wo.processor_id = pu.id
+        LEFT JOIN sys_user ru ON wo.reviewer_id = ru.id
+        <where>
+            <if test="bo.orderCode != null and bo.orderCode != ''">
+                AND wo.order_code LIKE CONCAT(#{bo.orderCode}, '%')
+            </if>
+            <if test="bo.deviceId != null">
+                AND wo.device_id = #{bo.deviceId}
+            </if>
+            <if test="bo.alarmId != null">
+                AND wo.alarm_id = #{bo.alarmId}
+            </if>
+            <if test="bo.orderType != null">
+                AND wo.order_type = #{bo.orderType}
+            </if>
+            <if test="bo.orderSource != null">
+                AND wo.order_source = #{bo.orderSource}
+            </if>
+            <if test="bo.priority != null">
+                AND wo.priority = #{bo.priority}
+            </if>
+            <if test="bo.creatorId != null">
+                AND wo.creator_id = #{bo.creatorId}
+            </if>
+            <if test="bo.assigneeId != null">
+                AND wo.assignee_id = #{bo.assigneeId}
+            </if>
+            <if test="bo.orderStatus != null">
+                AND wo.order_status = #{bo.orderStatus}
+            </if>
+        </where>
+        ORDER BY wo.create_time DESC
+    </select>
+
+    <select id="getWorkOrderDetailById" resultMap="WorkOrderVOResultMap">
+        SELECT 
+            wo.*,
+            fd.device_code,
+            fd.device_name,
+            cu.real_name AS creator_name,
+            au.real_name AS assignee_name,
+            pu.real_name AS processor_name,
+            ru.real_name AS reviewer_name
+        FROM device_work_order wo
+        LEFT JOIN factory_device fd ON wo.device_id = fd.device_id
+        LEFT JOIN sys_user cu ON wo.creator_id = cu.id
+        LEFT JOIN sys_user au ON wo.assignee_id = au.id
+        LEFT JOIN sys_user pu ON wo.processor_id = pu.id
+        LEFT JOIN sys_user ru ON wo.reviewer_id = ru.id
+        WHERE wo.order_id = #{orderId}
+    </select>
+
+                                                                                   <select id="selectStatisticsByUserId" resultType="com.izpan.modules.workorder.domain.vo.WorkOrderStatisticsVO">
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN order_status IN (2, 3) THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN order_status = 0 THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN order_status = 1 THEN 1 ELSE 0 END) as processing,
+            SUM(CASE WHEN order_status = 4 THEN 1 ELSE 0 END) as cancelled,
+            ROUND(SUM(CASE WHEN order_status IN (2, 3) THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as completionRate,
+            ROUND(AVG(handle_duration), 2) as avgHandleDuration,
+            ROUND(AVG(evaluation_score), 2) as avgEvaluationScore
+        FROM device_work_order
+        WHERE (assignee_id = #{userId} OR creator_id = #{userId})
+          AND create_time >= DATE_FORMAT(NOW(), '%Y-%m-01')
+          AND create_time &lt; DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 1 MONTH)
+    </select>
+
+    <select id="selectStatusDistributionByUserId" resultType="com.izpan.modules.workorder.domain.vo.WorkOrderStatisticsVO$StatusDistribution">
+        SELECT 
+            order_status as status,
+            CASE order_status 
+                WHEN 0 THEN '待处理'
+                WHEN 1 THEN '处理中'
+                WHEN 2 THEN '已完成'
+                WHEN 3 THEN '已审核'
+                WHEN 4 THEN '已取消'
+            END as statusName,
+            COUNT(*) as count
+        FROM device_work_order
+        WHERE (assignee_id = #{userId} OR creator_id = #{userId})
+          AND create_time >= DATE_FORMAT(NOW(), '%Y-%m-01')
+          AND create_time &lt; DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 1 MONTH)
+        GROUP BY order_status
+        ORDER BY order_status
+    </select>
+
+    <select id="selectPriorityDistributionByUserId" resultType="com.izpan.modules.workorder.domain.vo.WorkOrderStatisticsVO$PriorityDistribution">
+        SELECT 
+            priority,
+            CASE priority 
+                WHEN 1 THEN '紧急'
+                WHEN 2 THEN '高'
+                WHEN 3 THEN '中'
+                WHEN 4 THEN '低'
+            END as priorityName,
+            COUNT(*) as count
+        FROM device_work_order
+        WHERE (assignee_id = #{userId} OR creator_id = #{userId})
+          AND create_time >= DATE_FORMAT(NOW(), '%Y-%m-01')
+          AND create_time &lt; DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 1 MONTH)
+        GROUP BY priority
+        ORDER BY priority
+    </select>
+
+</mapper>

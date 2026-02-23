@@ -8,6 +8,7 @@ import com.izpan.modules.equipment.domain.dto.FactoryInfoAddDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryInfoDeleteDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryInfoSearchDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryInfoUpdateDTO;
+import com.izpan.modules.equipment.domain.vo.FactoryAreaTreeVO;
 import com.izpan.modules.equipment.domain.vo.FactoryInfoVO;
 import com.izpan.modules.equipment.facade.IFactoryInfoFacade;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,6 +40,12 @@ public class FactoryInfoController {
     @Operation(summary = "获取所有启用的工厂列表")
     public Result<List<FactoryInfoVO>> list() {
         return Result.data(factoryInfoFacade.listAllFactoryInfo());
+    }
+
+    @GetMapping("/tree")
+    @Operation(summary = "获取工厂-厂区树形结构")
+    public Result<List<FactoryAreaTreeVO>> tree() {
+        return Result.data(factoryInfoFacade.getFactoryAreaTree());
     }
 
     @GetMapping("/{id}")

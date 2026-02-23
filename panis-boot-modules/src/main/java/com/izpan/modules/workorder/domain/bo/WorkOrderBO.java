@@ -1,7 +1,7 @@
 package com.izpan.modules.workorder.domain.bo;
 
-import com.izpan.modules.workorder.domain.entity.WorkOrder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
 
@@ -14,7 +14,8 @@ import java.io.Serial;
  * @CreateTime 2026-01-27
  */
 @Data
-public class WorkOrderBO extends WorkOrder {
+@EqualsAndHashCode(callSuper = true)
+public class WorkOrderBO extends com.izpan.modules.workorder.domain.entity.WorkOrder {
 
     @Serial
     private static final long serialVersionUID = 1L;

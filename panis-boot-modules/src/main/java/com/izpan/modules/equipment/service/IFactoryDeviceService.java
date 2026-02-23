@@ -8,6 +8,7 @@ import com.izpan.modules.equipment.domain.dto.FactoryDeviceAddDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceDeleteDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceSearchDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceUpdateDTO;
+import com.izpan.modules.equipment.domain.vo.DevicePartTreeVO;
 
 import java.util.List;
 
@@ -16,6 +17,8 @@ public interface IFactoryDeviceService extends IService<FactoryDevice> {
     IPage<FactoryDevice> listFactoryDevicePage(PageQuery pageQuery, FactoryDeviceSearchDTO searchDTO);
 
     FactoryDevice getFactoryDeviceById(Long id);
+
+    List<DevicePartTreeVO> getDevicePartTreeByLocationId(Long locationId);
 
     boolean addFactoryDevice(FactoryDeviceAddDTO addDTO);
 

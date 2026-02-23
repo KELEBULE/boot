@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.izpan.modules.equipment.repository.mapper.FactoryDeviceMapper">
+
+    <resultMap id="DevicePartTreeVOResultMap" type="com.izpan.modules.equipment.domain.vo.DevicePartTreeVO">
+        <result column="unique_key" property="uniqueKey"/>
+        <result column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="code" property="code"/>
+        <result column="type" property="type"/>
+        <result column="location_id" property="locationId"/>
+        <collection property="children" ofType="com.izpan.modules.equipment.domain.vo.PartSimpleVO">
+            <result column="child_unique_key" property="uniqueKey"/>
+            <result column="child_id" property="id"/>
+            <result column="child_name" property="name"/>
+            <result column="child_code" property="code"/>
+            <result column="child_type" property="type"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectDevicePartTreeByLocationId" resultMap="DevicePartTreeVOResultMap">
+        SELECT 
+            CONCAT('device_', fd.device_id) AS unique_key,
+            fd.device_id AS id,
+            fd.device_name AS name,
+            fd.device_code AS code,
+            'device' AS type,
+            fd.location_id,
+            CONCAT('part_', dp.part_id) AS child_unique_key,
+            dp.part_id AS child_id,
+            dp.part_name AS child_name,
+            dp.part_code AS child_code,
+            'part' AS child_type
+        FROM factory_device fd
+        LEFT JOIN device_part dp ON fd.device_id = dp.device_id
+        WHERE fd.location_id = #{locationId}
+        ORDER BY fd.device_id, dp.part_id
+    </select>
+
+</mapper>
