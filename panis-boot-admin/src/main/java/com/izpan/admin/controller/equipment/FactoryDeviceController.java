@@ -24,7 +24,7 @@ import com.izpan.modules.equipment.domain.vo.DevicePartTreeVO;
 import com.izpan.modules.equipment.domain.vo.FactoryDeviceVO;
 import com.izpan.modules.equipment.facade.IFactoryDeviceFacade;
 
-import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,7 +40,7 @@ public class FactoryDeviceController {
     private final IFactoryDeviceFacade factoryDeviceFacade;
 
     @RequestMapping(value = "/page", method = {RequestMethod.GET, RequestMethod.POST})
-    @SaCheckRole("ADMIN")
+    @SaCheckPermission("factory:device:page")
     @RepeatSubmit(interval = -1)
     @Operation(summary = "获取工厂设备分页列表")
     public Result<RPage<FactoryDeviceVO>> page(@Parameter(description = "分页对象", required = true) @Valid PageQuery pageQuery,

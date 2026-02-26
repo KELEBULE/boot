@@ -21,7 +21,7 @@ import com.izpan.modules.equipment.domain.dto.FactoryAreaUpdateDTO;
 import com.izpan.modules.equipment.domain.vo.FactoryAreaVO;
 import com.izpan.modules.equipment.facade.IFactoryAreaFacade;
 
-import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,7 +37,7 @@ public class FactoryAreaController {
     private final IFactoryAreaFacade factoryAreaFacade;
 
     @GetMapping("/page")
-    @SaCheckRole("ADMIN")
+    @SaCheckPermission("factory:area:page")
     @Operation(summary = "获取厂区分页列表")
     public Result<RPage<FactoryAreaVO>> page(@Parameter(description = "分页对象", required = true) @Valid PageQuery pageQuery,
             @Parameter(description = "查询对象") FactoryAreaSearchDTO searchDTO) {
@@ -45,7 +45,7 @@ public class FactoryAreaController {
     }
 
     @GetMapping("/{id}")
-    @SaCheckRole("ADMIN")
+    @SaCheckPermission("factory:area:get")
     @Operation(summary = "根据ID获取厂区详细信息")
     public Result<FactoryAreaVO> get(@Parameter(description = "ID") @PathVariable("id") Long id) {
         return Result.data(factoryAreaFacade.getFactoryAreaById(id));
@@ -58,21 +58,21 @@ public class FactoryAreaController {
     }
 
     @PostMapping("/")
-    @SaCheckRole("ADMIN")
+    @SaCheckPermission("factory:area:add")
     @Operation(summary = "新增厂区")
     public Result<Boolean> add(@Parameter(description = "新增对象") @RequestBody @Valid FactoryAreaAddDTO addDTO) {
         return Result.status(factoryAreaFacade.addFactoryArea(addDTO));
     }
 
     @PutMapping("/")
-    @SaCheckRole("ADMIN")
+    @SaCheckPermission("factory:area:update")
     @Operation(summary = "更新厂区")
     public Result<Boolean> update(@Parameter(description = "更新对象") @RequestBody @Valid FactoryAreaUpdateDTO updateDTO) {
         return Result.status(factoryAreaFacade.updateFactoryArea(updateDTO));
     }
 
     @DeleteMapping("/")
-    @SaCheckRole("ADMIN")
+    @SaCheckPermission("factory:area:delete")
     @Operation(summary = "批量删除厂区")
     public Result<Boolean> delete(@Parameter(description = "删除对象") @RequestBody FactoryAreaDeleteDTO deleteDTO) {
         return Result.status(factoryAreaFacade.deleteFactoryArea(deleteDTO));

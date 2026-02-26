@@ -18,7 +18,6 @@
  */
 package com.izpan.admin.controller.ai;
 
-import cn.dev33.satoken.annotation.SaCheckPermission;
 import com.izpan.common.api.Result;
 import com.izpan.modules.ai.domain.dto.chat.AiChatRequestDTO;
 import com.izpan.modules.ai.domain.dto.chat.AiChatResponseDTO;
@@ -57,7 +56,6 @@ public class AiChatController {
     private IAiChatFacade aiChatFacade;
 
     @PostMapping("/completion")
-    // @SaCheckPermission("ai:chat:completion")  // TODO: 暂时移除权限检查以便测试
     @Operation(operationId = "1", summary = "AI聊天（普通响应）")
     public Result<AiChatResponseDTO> chatCompletion(
             @Parameter(description = "聊天请求对象", required = true) @Valid @RequestBody AiChatRequestDTO request) {
@@ -65,7 +63,6 @@ public class AiChatController {
     }
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-//    @SaCheckPermission("ai:chat:stream")
     @Operation(operationId = "2", summary = "AI聊天（流式响应）")
     public SseEmitter streamChat(
             @Parameter(description = "消息内容") @RequestParam String message,
@@ -87,7 +84,6 @@ public class AiChatController {
     }
 
     @GetMapping("/session/{sessionId}")
-//    @SaCheckPermission("ai:chat:history")
     @Operation(operationId = "3", summary = "获取会话历史")
     public Result<List<AiChatVO>> getSessionHistory(
             @Parameter(description = "会话ID") @PathVariable String sessionId) {
@@ -95,7 +91,6 @@ public class AiChatController {
     }
 
     @GetMapping("/sessions")
-//    @SaCheckPermission("ai:chat:sessions")
     @Operation(operationId = "8", summary = "获取会话列表")
     public Result<List<AiSessionVO>> getSessionList(
             @Parameter(description = "用户ID") @RequestParam(required = false) Long userId) {
@@ -126,7 +121,6 @@ public class AiChatController {
     }
 
     @DeleteMapping("/file")
-//    @SaCheckPermission("ai:file:delete")
     @Operation(operationId = "7", summary = "删除文件")
     public Result<Boolean> deleteFiles(
             @Parameter(description = "文件删除对象", required = true) @Valid @RequestBody AiFileDeleteDTO deleteDTO) {
