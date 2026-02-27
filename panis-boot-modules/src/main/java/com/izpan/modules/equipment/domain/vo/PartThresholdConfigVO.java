@@ -30,25 +30,37 @@ public class PartThresholdConfigVO implements Serializable {
     @JsonProperty("partId")
     private Long partId;
 
-    @Schema(description = "配置名称")
-    @JsonProperty("configName")
-    private String configName;
+    @Schema(description = "部件名称")
+    @JsonProperty("partName")
+    private String partName;
 
-    @Schema(description = "温度下限")
-    @JsonProperty("tempMin")
-    private BigDecimal tempMin;
+    @Schema(description = "部件编码")
+    @JsonProperty("partCode")
+    private String partCode;
 
-    @Schema(description = "温度上限")
-    @JsonProperty("tempMax")
-    private BigDecimal tempMax;
+    @Schema(description = "一级报警比较运算符")
+    @JsonProperty("level1Operator")
+    private String level1Operator;
 
-    @Schema(description = "预警下限")
-    @JsonProperty("warningMin")
-    private BigDecimal warningMin;
+    @Schema(description = "一级报警阈值")
+    @JsonProperty("level1Value")
+    private BigDecimal level1Value;
 
-    @Schema(description = "预警上限")
-    @JsonProperty("warningMax")
-    private BigDecimal warningMax;
+    @Schema(description = "二级报警比较运算符")
+    @JsonProperty("level2Operator")
+    private String level2Operator;
+
+    @Schema(description = "二级报警阈值")
+    @JsonProperty("level2Value")
+    private BigDecimal level2Value;
+
+    @Schema(description = "三级报警比较运算符")
+    @JsonProperty("level3Operator")
+    private String level3Operator;
+
+    @Schema(description = "三级报警阈值")
+    @JsonProperty("level3Value")
+    private BigDecimal level3Value;
 
     @Schema(description = "检测间隔(秒)")
     @JsonProperty("checkInterval")

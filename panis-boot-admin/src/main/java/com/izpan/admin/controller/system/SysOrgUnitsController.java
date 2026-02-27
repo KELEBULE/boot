@@ -27,6 +27,7 @@ import com.izpan.modules.system.domain.dto.org.units.SysOrgUnitsAddDTO;
 import com.izpan.modules.system.domain.dto.org.units.SysOrgUnitsDeleteDTO;
 import com.izpan.modules.system.domain.dto.org.units.SysOrgUnitsSearchDTO;
 import com.izpan.modules.system.domain.dto.org.units.SysOrgUnitsUpdateDTO;
+import com.izpan.modules.system.domain.vo.OrgUserTreeVO;
 import com.izpan.modules.system.domain.vo.SysOrgUnitsTreeVO;
 import com.izpan.modules.system.domain.vo.SysOrgUnitsVO;
 import com.izpan.modules.system.facade.ISysOrgUnitsFacade;
@@ -99,6 +100,13 @@ public class SysOrgUnitsController {
     @Operation(operationId = "6", summary = "获取组织/部门/子部门管理树结构数据")
     public Result<List<SysOrgUnitsTreeVO>> tree() {
         return Result.data(sysOrgUnitsFacade.queryAllOrgUnitsListConvertToTree());
+    }
+
+    @GetMapping("/tree_with_users")
+    @SaCheckPermission("sys:org:units:tree")
+    @Operation(operationId = "7", summary = "获取组织架构与用户树结构数据")
+    public Result<List<OrgUserTreeVO>> treeWithUsers() {
+        return Result.data(sysOrgUnitsFacade.queryOrgUserTree());
     }
 
 }

@@ -30,16 +30,19 @@ import com.izpan.modules.system.domain.dto.org.units.SysOrgUnitsDeleteDTO;
 import com.izpan.modules.system.domain.dto.org.units.SysOrgUnitsSearchDTO;
 import com.izpan.modules.system.domain.dto.org.units.SysOrgUnitsUpdateDTO;
 import com.izpan.modules.system.domain.entity.SysOrgUnits;
+import com.izpan.modules.system.domain.vo.OrgUserTreeVO;
 import com.izpan.modules.system.domain.vo.SysOrgUnitsTreeVO;
 import com.izpan.modules.system.domain.vo.SysOrgUnitsVO;
 import com.izpan.modules.system.facade.ISysOrgUnitsFacade;
 import com.izpan.modules.system.service.ISysOrgUnitsService;
+import com.izpan.modules.system.service.ISysUserOrgService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -151,6 +154,39 @@ public class SysOrgUnitsFacadeImpl implements ISysOrgUnitsFacade {
                 .collect(Collectors.groupingBy(SysOrgUnits::getParentId));
         // 组装对应结构
         return initOrgUnitsChild(0L, orgUnitsMap);
+    }
+
+    @Override
+    public List<OrgUserTreeVO> queryOrgUserTree() {
+        // 查询所有组织数据
+        List<SysOrgUnits> allOrgUnits = sysOrgUnitsService.querySysOrgUnitsListWithStatus(StringPools.ONE);
+        // 按 parentId 分组
+        Map<Long, List<SysOrgUnits>> orgUnitsMap = allOrgUnits.stream()
+                .collect(Collectors.groupingBy(SysOrgUnits::getParentId));
+        // 组装组织用户树
+        return buildOrgUserTree(0L, orgUnitsMap);
+    }
+
+    private List<OrgUserTreeVO> buildOrgUserTree(Long parentId, Map<Long, List<SysOrgUnits>> orgUnitsMap) {
+        List<SysOrgUnits> childOrgUnits = orgUnitsMap.get(parentId);
+        if (CollectionUtils.isEmpty(childOrgUnits)) {
+            return Collections.emptyList();
+        }
+        return childOrgUnits.stream()
+                .map(unit -> {
+                    OrgUserTreeVO treeVO = new OrgUserTreeVO();
+                    treeVO.setId(unit.getId());
+                    treeVO.setName(unit.getName());
+                    treeVO.setType("org");
+                    List<OrgUserTreeVO> children = new ArrayList<>();
+                    // 递归添加子组织
+                    List<OrgUserTreeVO> childOrgs = buildOrgUserTree(unit.getId(), orgUnitsMap);
+                    children.addAll(childOrgs);
+                    treeVO.setChildren(children.isEmpty() ? null : children);
+                    return treeVO;
+                })
+                .sorted(Comparator.comparing(OrgUserTreeVO::getName))
+                .toList();
     }
 
 }

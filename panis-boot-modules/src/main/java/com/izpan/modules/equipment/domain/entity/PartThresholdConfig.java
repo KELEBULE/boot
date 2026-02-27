@@ -31,20 +31,23 @@ public class PartThresholdConfig implements Serializable {
     @JsonProperty("partId")
     private Long partId;
 
-    @JsonProperty("configName")
-    private String configName;
+    @JsonProperty("level1Operator")
+    private String level1Operator;
 
-    @JsonProperty("tempMin")
-    private BigDecimal tempMin;
+    @JsonProperty("level1Value")
+    private BigDecimal level1Value;
 
-    @JsonProperty("tempMax")
-    private BigDecimal tempMax;
+    @JsonProperty("level2Operator")
+    private String level2Operator;
 
-    @JsonProperty("warningMin")
-    private BigDecimal warningMin;
+    @JsonProperty("level2Value")
+    private BigDecimal level2Value;
 
-    @JsonProperty("warningMax")
-    private BigDecimal warningMax;
+    @JsonProperty("level3Operator")
+    private String level3Operator;
+
+    @JsonProperty("level3Value")
+    private BigDecimal level3Value;
 
     @JsonProperty("checkInterval")
     private Integer checkInterval;

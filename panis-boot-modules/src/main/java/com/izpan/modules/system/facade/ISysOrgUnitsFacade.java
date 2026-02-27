@@ -25,6 +25,7 @@ import com.izpan.modules.system.domain.dto.org.units.SysOrgUnitsAddDTO;
 import com.izpan.modules.system.domain.dto.org.units.SysOrgUnitsDeleteDTO;
 import com.izpan.modules.system.domain.dto.org.units.SysOrgUnitsSearchDTO;
 import com.izpan.modules.system.domain.dto.org.units.SysOrgUnitsUpdateDTO;
+import com.izpan.modules.system.domain.vo.OrgUserTreeVO;
 import com.izpan.modules.system.domain.vo.SysOrgUnitsTreeVO;
 import com.izpan.modules.system.domain.vo.SysOrgUnitsVO;
 
@@ -100,5 +101,12 @@ public interface ISysOrgUnitsFacade {
      * @CreateTime 2024-07-11 - 10:31:23
      */
     List<SysOrgUnitsTreeVO> queryAllOrgUnitsListConvertToTree();
+
+    /**
+     * 查询组织架构与用户树形结构
+     *
+     * @return {@link List }<{@link OrgUserTreeVO }> 组织用户树形结构对象集合
+     */
+    List<OrgUserTreeVO> queryOrgUserTree();
 
 }
