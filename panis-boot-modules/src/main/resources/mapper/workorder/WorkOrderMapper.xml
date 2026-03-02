@@ -34,4 +34,84 @@
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
+    <select id="selectStatisticsByUserId" resultType="com.izpan.modules.workorder.domain.vo.WorkOrderStatisticsVO">
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN order_status IN (2, 3) THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN order_status = 0 THEN 1 ELSE 0 END) as pending,
+            SUM(CASE WHEN order_status = 1 THEN 1 ELSE 0 END) as processing,
+            SUM(CASE WHEN order_status = 4 THEN 1 ELSE 0 END) as cancelled,
+            ROUND(SUM(CASE WHEN order_status IN (2, 3) THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(*), 0), 2) as completionRate,
+            ROUND(AVG(handle_duration), 2) as avgHandleDuration,
+            ROUND(AVG(evaluation_score), 2) as avgEvaluationScore
+        FROM device_work_order
+        WHERE (assignee_id = #{userId} OR creator_id = #{userId})
+        <choose>
+            <when test="timeRange == 'week'">
+                AND create_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            </when>
+            <when test="timeRange == 'quarter'">
+                AND create_time >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
+            </when>
+            <otherwise>
+                AND create_time >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="selectStatusDistributionByUserId" resultType="com.izpan.modules.workorder.domain.vo.WorkOrderStatisticsVO$StatusDistribution">
+        SELECT 
+            order_status as status,
+            CASE order_status 
+                WHEN 0 THEN '待处理'
+                WHEN 1 THEN '处理中'
+                WHEN 2 THEN '已完成'
+                WHEN 3 THEN '已审核'
+                WHEN 4 THEN '已取消'
+            END as statusName,
+            COUNT(*) as count
+        FROM device_work_order
+        WHERE (assignee_id = #{userId} OR creator_id = #{userId})
+        <choose>
+            <when test="timeRange == 'week'">
+                AND create_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            </when>
+            <when test="timeRange == 'quarter'">
+                AND create_time >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
+            </when>
+            <otherwise>
+                AND create_time >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            </otherwise>
+        </choose>
+        GROUP BY order_status
+        ORDER BY order_status
+    </select>
+
+    <select id="selectPriorityDistributionByUserId" resultType="com.izpan.modules.workorder.domain.vo.WorkOrderStatisticsVO$PriorityDistribution">
+        SELECT 
+            priority,
+            CASE priority 
+                WHEN 1 THEN '紧急'
+                WHEN 2 THEN '高'
+                WHEN 3 THEN '中'
+                WHEN 4 THEN '低'
+            END as priorityName,
+            COUNT(*) as count
+        FROM device_work_order
+        WHERE (assignee_id = #{userId} OR creator_id = #{userId})
+        <choose>
+            <when test="timeRange == 'week'">
+                AND create_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            </when>
+            <when test="timeRange == 'quarter'">
+                AND create_time >= DATE_SUB(NOW(), INTERVAL 3 MONTH)
+            </when>
+            <otherwise>
+                AND create_time >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
+            </otherwise>
+        </choose>
+        GROUP BY priority
+        ORDER BY priority
+    </select>
+
 </mapper>

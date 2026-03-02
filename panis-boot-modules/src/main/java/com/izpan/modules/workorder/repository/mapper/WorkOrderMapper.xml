@@ -120,8 +120,13 @@
             ROUND(AVG(evaluation_score), 2) as avgEvaluationScore
         FROM device_work_order
         WHERE (assignee_id = #{userId} OR creator_id = #{userId})
-          AND create_time >= DATE_FORMAT(NOW(), '%Y-%m-01')
-          AND create_time &lt; DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 1 MONTH)
+          AND create_time >= 
+            CASE #{timeRange}
+                WHEN 'week' THEN DATE_SUB(NOW(), INTERVAL 1 WEEK)
+                WHEN 'month' THEN DATE_SUB(NOW(), INTERVAL 1 MONTH)
+                WHEN 'quarter' THEN DATE_SUB(NOW(), INTERVAL 3 MONTH)
+                ELSE DATE_SUB(NOW(), INTERVAL 1 WEEK)
+            END
     </select>
 
     <select id="selectStatusDistributionByUserId" resultType="com.izpan.modules.workorder.domain.vo.WorkOrderStatisticsVO$StatusDistribution">
@@ -137,8 +142,13 @@
             COUNT(*) as count
         FROM device_work_order
         WHERE (assignee_id = #{userId} OR creator_id = #{userId})
-          AND create_time >= DATE_FORMAT(NOW(), '%Y-%m-01')
-          AND create_time &lt; DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 1 MONTH)
+          AND create_time >= 
+            CASE #{timeRange}
+                WHEN 'week' THEN DATE_SUB(NOW(), INTERVAL 1 WEEK)
+                WHEN 'month' THEN DATE_SUB(NOW(), INTERVAL 1 MONTH)
+                WHEN 'quarter' THEN DATE_SUB(NOW(), INTERVAL 3 MONTH)
+                ELSE DATE_SUB(NOW(), INTERVAL 1 WEEK)
+            END
         GROUP BY order_status
         ORDER BY order_status
     </select>
@@ -155,8 +165,13 @@
             COUNT(*) as count
         FROM device_work_order
         WHERE (assignee_id = #{userId} OR creator_id = #{userId})
-          AND create_time >= DATE_FORMAT(NOW(), '%Y-%m-01')
-          AND create_time &lt; DATE_ADD(DATE_FORMAT(NOW(), '%Y-%m-01'), INTERVAL 1 MONTH)
+          AND create_time >= 
+            CASE #{timeRange}
+                WHEN 'week' THEN DATE_SUB(NOW(), INTERVAL 1 WEEK)
+                WHEN 'month' THEN DATE_SUB(NOW(), INTERVAL 1 MONTH)
+                WHEN 'quarter' THEN DATE_SUB(NOW(), INTERVAL 3 MONTH)
+                ELSE DATE_SUB(NOW(), INTERVAL 1 WEEK)
+            END
         GROUP BY priority
         ORDER BY priority
     </select>

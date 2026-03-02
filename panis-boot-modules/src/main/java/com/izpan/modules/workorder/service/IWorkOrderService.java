@@ -99,10 +99,11 @@ public interface IWorkOrderService extends IService<WorkOrder> {
     boolean saveWorkOrderLog(WorkOrderLog workOrderLog);
 
     /**
-     * 获取用户本月工单统计数据
+     * 获取用户工单统计数据
      *
      * @param userId 用户ID
+     * @param timeRange 时间范围: week-近一周, month-近一月, quarter-近一季度
      * @return 统计数据
      */
-    WorkOrderStatisticsVO getStatisticsByUserId(Long userId);
+    WorkOrderStatisticsVO getStatisticsByUserId(Long userId, String timeRange);
 }

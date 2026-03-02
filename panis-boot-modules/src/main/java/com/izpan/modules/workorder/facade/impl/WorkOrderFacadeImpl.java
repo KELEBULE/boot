@@ -93,8 +93,8 @@ public class WorkOrderFacadeImpl implements IWorkOrderFacade {
     }
 
     @Override
-    public WorkOrderStatisticsVO getStatistics() {
+    public WorkOrderStatisticsVO getStatistics(String timeRange) {
         Long userId = StpUtil.getLoginIdAsLong();
-        return workOrderService.getStatisticsByUserId(userId);
+        return workOrderService.getStatisticsByUserId(userId, timeRange);
     }
 }

@@ -87,7 +87,7 @@ public class SysOrgUnitsFacadeImpl implements ISysOrgUnitsFacade {
                     orgUnitsTreeVO.setChildren(initOrgUnitsChild(unit.getId(), orgUnitsMap));
                     return orgUnitsTreeVO;
                 })
-                .sorted(Comparator.comparing(SysOrgUnitsTreeVO::getSort))
+                .sorted(Comparator.comparing(SysOrgUnitsTreeVO::getSort, Comparator.nullsLast(Comparator.naturalOrder())))
                 .toList();
     }
 

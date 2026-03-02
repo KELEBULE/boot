@@ -26,9 +26,9 @@ public interface WorkOrderMapper extends BaseMapper<WorkOrder> {
 
     WorkOrderVO getWorkOrderDetailById(@Param("orderId") Long orderId);
 
-    WorkOrderStatisticsVO selectStatisticsByUserId(@Param("userId") Long userId);
+    WorkOrderStatisticsVO selectStatisticsByUserId(@Param("userId") Long userId, @Param("timeRange") String timeRange);
 
-    List<WorkOrderStatisticsVO.StatusDistribution> selectStatusDistributionByUserId(@Param("userId") Long userId);
+    List<WorkOrderStatisticsVO.StatusDistribution> selectStatusDistributionByUserId(@Param("userId") Long userId, @Param("timeRange") String timeRange);
 
-    List<WorkOrderStatisticsVO.PriorityDistribution> selectPriorityDistributionByUserId(@Param("userId") Long userId);
+    List<WorkOrderStatisticsVO.PriorityDistribution> selectPriorityDistributionByUserId(@Param("userId") Long userId, @Param("timeRange") String timeRange);
 }

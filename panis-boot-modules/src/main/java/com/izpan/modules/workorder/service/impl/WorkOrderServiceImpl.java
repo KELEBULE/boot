@@ -234,11 +234,11 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     }
 
     @Override
-    public WorkOrderStatisticsVO getStatisticsByUserId(Long userId) {
-        WorkOrderStatisticsVO statistics = baseMapper.selectStatisticsByUserId(userId);
+    public WorkOrderStatisticsVO getStatisticsByUserId(Long userId, String timeRange) {
+        WorkOrderStatisticsVO statistics = baseMapper.selectStatisticsByUserId(userId, timeRange);
         if (statistics != null) {
-            statistics.setStatusDistribution(baseMapper.selectStatusDistributionByUserId(userId));
-            statistics.setPriorityDistribution(baseMapper.selectPriorityDistributionByUserId(userId));
+            statistics.setStatusDistribution(baseMapper.selectStatusDistributionByUserId(userId, timeRange));
+            statistics.setPriorityDistribution(baseMapper.selectPriorityDistributionByUserId(userId, timeRange));
         }
         return statistics;
     }

@@ -30,32 +30,34 @@ public class InterceptorConfiguration implements WebMvcConfigurer {
 
     // 对 swagger 的请求不进行拦截
     public final String[] swaggerExcludePatterns = new String[]{
-            "/v3/**",
-            "/webjars/**",
-            "/swagger-ui/**",
-            "/swagger-resources/**",
-            "/favicon.ico",
-            "/api",
-            "/api-docs",
-            "/api-docs/**",
-            "/doc.html",
-            "/doc.html/**",
-            "/swagger-ui.html",
-            "/swagger-ui.html/**"};
+        "/v3/**",
+        "/webjars/**",
+        "/swagger-ui/**",
+        "/swagger-resources/**",
+        "/favicon.ico",
+        "/api",
+        "/api-docs",
+        "/api-docs/**",
+        "/doc.html",
+        "/doc.html/**",
+        "/swagger-ui.html",
+        "/swagger-ui.html/**"};
 
     // 对 Druid 的请求不进行拦截
     public final String[] druidExcludePatterns = new String[]{
-            "/druid/**"
+        "/druid/**"
     };
 
     // 业务放行接口
     public final String[] businessExcludePatterns = new String[]{
-            "/auth/user_name",
-            "/auth/send_email_code",
-            "/auth/email_code",
-            "/auth/email_register",
-            "/email/send_code",
-            "/email/verify_code"
+        "/auth/user_name",
+        "/auth/send_email_code",
+        "/auth/email_code",
+        "/auth/email_register",
+        "/email/send_code",
+        "/email/verify_code",
+        "/device_detection_record/receive",
+        "/device_detection_record/receive/batch"
     };
 
     @Override

@@ -72,7 +72,7 @@ public class SysMenuFacadeImpl implements ISysMenuFacade {
             menuPageVOList.add(menuPageVO);
         });
         // 按照排序值排序
-        menuPageVOList.sort(Comparator.comparing(SysMenuTreeVO::getSort));
+        menuPageVOList.sort(Comparator.comparing(SysMenuTreeVO::getSort, Comparator.nullsLast(Comparator.naturalOrder())));
         return menuPageVOList;
     }
 
@@ -154,7 +154,7 @@ public class SysMenuFacadeImpl implements ISysMenuFacade {
             // 根据菜单Id获取权限信息
             List<SysPermissionBO> permissions = menuIdPermissionMap.getOrDefault(menu.getId(), Lists.newArrayList());
             // 按照排序值排序
-            permissions.sort(Comparator.comparing(SysPermissionBO::getSort));
+            permissions.sort(Comparator.comparing(SysPermissionBO::getSort, Comparator.nullsLast(Comparator.naturalOrder())));
             // 构建按钮权限对象
             build.setButtons(CglibUtil.convertList(permissions, SysMenuPermissionVO.Button::new));
             return build;

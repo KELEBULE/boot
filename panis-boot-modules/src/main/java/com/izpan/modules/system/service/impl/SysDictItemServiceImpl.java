@@ -108,7 +108,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
     @Override
     public List<SysDictItem> queryAllDictItemList(String code) {
         List<SysDictItem> sysDictItems = baseMapper.queryAllDictItemList(code);
-        sysDictItems.sort(Comparator.comparing(SysDictItem::getSort));
+        sysDictItems.sort(Comparator.comparing(SysDictItem::getSort, Comparator.nullsLast(Comparator.naturalOrder())));
         return sysDictItems;
     }
 
@@ -147,7 +147,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
     @Override
     public List<SysDictItemOptions> transformSysDictItemOptions(List<SysDictItem> sysDictItems) {
         // 排序
-        sysDictItems.sort(Comparator.comparing(SysDictItem::getSort));
+        sysDictItems.sort(Comparator.comparing(SysDictItem::getSort, Comparator.nullsLast(Comparator.naturalOrder())));
         // 转换
         return CollectionUtil.toMutableList(sysDictItems.stream().map(item ->
                 SysDictItemOptions.builder()
@@ -171,7 +171,7 @@ public class SysDictItemServiceImpl extends ServiceImpl<SysDictItemMapper, SysDi
                                 Collectors.toList(),
                                 items -> {
                                     // 对每组字典项进行排序
-                                    items.sort(Comparator.comparing(SysDictItem::getSort));
+                                    items.sort(Comparator.comparing(SysDictItem::getSort, Comparator.nullsLast(Comparator.naturalOrder())));
                                     return CglibUtil.convertList(items, DictItem::new);
                                 }
                         )

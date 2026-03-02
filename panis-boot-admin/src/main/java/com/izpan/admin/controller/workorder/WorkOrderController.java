@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.izpan.common.api.Result;
@@ -101,8 +102,9 @@ public class WorkOrderController {
     }
 
     @GetMapping("/statistics")
-    @Operation(summary = "获取当前用户本月工单统计数据")
-    public Result<WorkOrderStatisticsVO> statistics() {
-        return Result.data(workOrderFacade.getStatistics());
+    @Operation(summary = "获取当前用户工单统计数据")
+    public Result<WorkOrderStatisticsVO> statistics(
+            @RequestParam(defaultValue = "week") @Parameter(description = "时间范围: week-近一周, month-近一月, quarter-近一季度") String timeRange) {
+        return Result.data(workOrderFacade.getStatistics(timeRange));
     }
 }

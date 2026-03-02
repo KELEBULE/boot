@@ -83,9 +83,10 @@ public interface IWorkOrderFacade {
     List<WorkOrderLogVO> getWorkOrderLogs(Long orderId);
 
     /**
-     * 获取当前用户本月工单统计数据
+     * 获取当前用户工单统计数据
      *
+     * @param timeRange 时间范围: week-近一周, month-近一月, quarter-近一季度
      * @return 统计数据
      */
-    WorkOrderStatisticsVO getStatistics();
+    WorkOrderStatisticsVO getStatistics(String timeRange);
 }
