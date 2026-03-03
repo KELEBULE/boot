@@ -14,6 +14,8 @@ public interface IDevicePartService extends IService<DevicePart> {
 
     DevicePart getDevicePartById(Long id);
 
+    DevicePart getDevicePartByPartCode(String partCode);
+
     boolean addDevicePart(DevicePartAddDTO addDTO);
 
     boolean updateDevicePart(DevicePartUpdateDTO updateDTO);

@@ -103,6 +103,14 @@ public class FactoryDeviceVO implements Serializable {
     @JsonProperty("deviceNote")
     private String deviceNote;
 
+    @Schema(description = "3D模型URL")
+    @JsonProperty("modelUrl")
+    private String modelUrl;
+
+    @Schema(description = "设备图片URL")
+    @JsonProperty("imageUrl")
+    private String imageUrl;
+
     @Schema(description = "创建时间")
     @JsonProperty("createTime")
     private LocalDateTime createTime;

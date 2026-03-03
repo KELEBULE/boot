@@ -57,6 +57,10 @@ public class DevicePartVO implements Serializable {
     @JsonProperty("partStatus")
     private Integer partStatus;
 
+    @Schema(description = "模型节点名称(用于3D模型定位)")
+    @JsonProperty("modelNodeName")
+    private String modelNodeName;
+
     @Schema(description = "创建时间")
     @JsonProperty("createTime")
     private LocalDateTime createTime;

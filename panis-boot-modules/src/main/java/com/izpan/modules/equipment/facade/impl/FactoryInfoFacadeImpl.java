@@ -11,6 +11,8 @@ import com.izpan.modules.equipment.domain.dto.FactoryInfoUpdateDTO;
 import com.izpan.modules.equipment.domain.entity.FactoryInfo;
 import com.izpan.modules.equipment.domain.vo.FactoryAreaTreeVO;
 import com.izpan.modules.equipment.domain.vo.FactoryInfoVO;
+import com.izpan.modules.equipment.domain.vo.LatestAlarmDeviceVO;
+import com.izpan.modules.equipment.domain.vo.MonitorDeviceTreeVO;
 import com.izpan.modules.equipment.facade.IFactoryInfoFacade;
 import com.izpan.modules.equipment.service.IFactoryInfoService;
 import lombok.RequiredArgsConstructor;
@@ -77,5 +79,15 @@ public class FactoryInfoFacadeImpl implements IFactoryInfoFacade {
     @Transactional
     public boolean deleteFactoryInfoByIds(List<Long> ids) {
         return factoryInfoService.deleteFactoryInfoByIds(ids);
+    }
+
+    @Override
+    public List<MonitorDeviceTreeVO> getMonitorDeviceTree(Long factoryId, Long areaId, Long deviceId) {
+        return factoryInfoService.getMonitorDeviceTree(factoryId, areaId, deviceId);
+    }
+
+    @Override
+    public LatestAlarmDeviceVO getLatestAlarmDevice() {
+        return factoryInfoService.getLatestAlarmDevice();
     }
 }

@@ -11,6 +11,10 @@ spring:
   main:
     allow-circular-references: true
     allow-bean-definition-overriding: true
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
   config:
     import:
       - classpath:config/druid.yml

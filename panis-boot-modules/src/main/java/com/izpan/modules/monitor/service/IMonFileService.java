@@ -54,11 +54,11 @@ public interface IMonFileService extends IService<MonFile> {
      * 文件管理 - 新增
      *
      * @param file 文件
-     * @return {@link boolean} 是否成功
+     * @return {@link String} 文件URL
      * @author payne.zhuang
      * @CreateTime 2024-11-25 - 21:19:40
      */
-    boolean putFile(MultipartFile file);
+    String putFile(MultipartFile file);
 
     /**
      * 获取文件外链链接

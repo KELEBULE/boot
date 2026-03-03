@@ -81,6 +81,12 @@ public class FactoryDevice implements Serializable {
     @JsonProperty("deviceNote")
     private String deviceNote;
 
+    @JsonProperty("modelUrl")
+    private String modelUrl;
+
+    @JsonProperty("imageUrl")
+    private String imageUrl;
+
     @JsonProperty("createTime")
     private LocalDateTime createTime;
 

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.izpan.common.api.Result;
@@ -20,6 +21,8 @@ import com.izpan.modules.equipment.domain.dto.FactoryInfoSearchDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryInfoUpdateDTO;
 import com.izpan.modules.equipment.domain.vo.FactoryAreaTreeVO;
 import com.izpan.modules.equipment.domain.vo.FactoryInfoVO;
+import com.izpan.modules.equipment.domain.vo.LatestAlarmDeviceVO;
+import com.izpan.modules.equipment.domain.vo.MonitorDeviceTreeVO;
 import com.izpan.modules.equipment.facade.IFactoryInfoFacade;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
@@ -55,6 +58,21 @@ public class FactoryInfoController {
     @Operation(summary = "获取工厂-厂区树形结构")
     public Result<List<FactoryAreaTreeVO>> tree() {
         return Result.data(factoryInfoFacade.getFactoryAreaTree());
+    }
+
+    @GetMapping("/monitor_tree")
+    @Operation(summary = "获取监控中心设备树形结构(工厂-厂区-设备-部件)")
+    public Result<List<MonitorDeviceTreeVO>> monitorTree(
+            @Parameter(description = "工厂ID") @RequestParam(required = false) Long factoryId,
+            @Parameter(description = "厂区ID") @RequestParam(required = false) Long areaId,
+            @Parameter(description = "设备ID") @RequestParam(required = false) Long deviceId) {
+        return Result.data(factoryInfoFacade.getMonitorDeviceTree(factoryId, areaId, deviceId));
+    }
+
+    @GetMapping("/latest_alarm_device")
+    @Operation(summary = "获取最新报警设备信息(用于监控中心默认显示)")
+    public Result<LatestAlarmDeviceVO> latestAlarmDevice() {
+        return Result.data(factoryInfoFacade.getLatestAlarmDevice());
     }
 
     @GetMapping("/{id}")

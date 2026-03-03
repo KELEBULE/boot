@@ -48,6 +48,9 @@ public class DevicePart implements Serializable {
     @JsonProperty("partStatus")
     private Integer partStatus;
 
+    @JsonProperty("modelNodeName")
+    private String modelNodeName;
+
     @JsonProperty("createTime")
     private LocalDateTime createTime;
 

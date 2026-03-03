@@ -36,6 +36,12 @@ public class DevicePartFacadeImpl implements IDevicePartFacade {
     }
 
     @Override
+    public DevicePartVO getDevicePartByPartCode(String partCode) {
+        DevicePart part = devicePartService.getDevicePartByPartCode(partCode);
+        return BeanUtil.copyProperties(part, DevicePartVO.class);
+    }
+
+    @Override
     @Transactional
     public boolean addDevicePart(DevicePartAddDTO addDTO) {
         return devicePartService.addDevicePart(addDTO);

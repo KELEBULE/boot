@@ -9,6 +9,8 @@ import com.izpan.modules.equipment.domain.dto.FactoryInfoSearchDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryInfoUpdateDTO;
 import com.izpan.modules.equipment.domain.vo.FactoryAreaTreeVO;
 import com.izpan.modules.equipment.domain.vo.FactoryInfoVO;
+import com.izpan.modules.equipment.domain.vo.LatestAlarmDeviceVO;
+import com.izpan.modules.equipment.domain.vo.MonitorDeviceTreeVO;
 
 import java.util.List;
 
@@ -29,4 +31,8 @@ public interface IFactoryInfoFacade {
     boolean deleteFactoryInfo(FactoryInfoDeleteDTO deleteDTO);
 
     boolean deleteFactoryInfoByIds(List<Long> ids);
+
+    List<MonitorDeviceTreeVO> getMonitorDeviceTree(Long factoryId, Long areaId, Long deviceId);
+
+    LatestAlarmDeviceVO getLatestAlarmDevice();
 }

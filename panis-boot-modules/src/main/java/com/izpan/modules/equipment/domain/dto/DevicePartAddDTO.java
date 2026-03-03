@@ -33,4 +33,7 @@ public class DevicePartAddDTO implements Serializable {
 
     @Schema(description = "部件状态 0-禁用 1-启用")
     private Integer partStatus;
+
+    @Schema(description = "模型节点名称(用于3D模型定位)")
+    private String modelNodeName;
 }

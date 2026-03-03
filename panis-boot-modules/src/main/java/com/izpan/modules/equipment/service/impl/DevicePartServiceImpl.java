@@ -36,6 +36,13 @@ public class DevicePartServiceImpl extends ServiceImpl<DevicePartMapper, DeviceP
     }
 
     @Override
+    public DevicePart getDevicePartByPartCode(String partCode) {
+        LambdaQueryWrapper<DevicePart> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DevicePart::getPartCode, partCode);
+        return baseMapper.selectOne(queryWrapper);
+    }
+
+    @Override
     public boolean addDevicePart(DevicePartAddDTO addDTO) {
         // 验证设备是否存在
         FactoryDevice device = factoryDeviceMapper.selectById(addDTO.getDeviceId());

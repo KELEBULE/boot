@@ -75,12 +75,11 @@ public class MonFileServiceImpl extends ServiceImpl<MonFileMapper, MonFile> impl
 
     @Override
     @SneakyThrows
-    public boolean putFile(MultipartFile file) {
-        // 上传文件
+    public String putFile(MultipartFile file) {
         OssFile ossFile = ossManager.service().putFile(file.getOriginalFilename(), file.getInputStream());
-        // 保存文件信息
         MonFile monFile = of(file, ossFile);
-        return super.save(monFile);
+        super.save(monFile);
+        return ossFile.getPath();
     }
 
     @Override

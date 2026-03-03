@@ -38,6 +38,13 @@ public class DevicePartController {
         return Result.data(devicePartFacade.getDevicePartById(id));
     }
 
+    @GetMapping("/code/{partCode}")
+    @SaCheckPermission("device:part:get")
+    @Operation(summary = "根据部件编码获取部件详细信息")
+    public Result<DevicePartVO> getByPartCode(@Parameter(description = "部件编码") @PathVariable("partCode") String partCode) {
+        return Result.data(devicePartFacade.getDevicePartByPartCode(partCode));
+    }
+
     @PostMapping("/")
     @SaCheckPermission("device:part:add")
     @Operation(summary = "新增设备部件")

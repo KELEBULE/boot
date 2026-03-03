@@ -13,6 +13,8 @@ public interface IDevicePartFacade {
 
     DevicePartVO getDevicePartById(Long id);
 
+    DevicePartVO getDevicePartByPartCode(String partCode);
+
     boolean addDevicePart(DevicePartAddDTO addDTO);
 
     boolean updateDevicePart(DevicePartUpdateDTO updateDTO);

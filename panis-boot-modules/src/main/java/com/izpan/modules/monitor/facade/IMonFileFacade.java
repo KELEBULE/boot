@@ -94,11 +94,11 @@ public interface IMonFileFacade {
      * 上传文件
      *
      * @param file 文件
-     * @return {@link Boolean} 结果
+     * @return {@link String} 文件URL
      * @author payne.zhuang
      * @CreateTime 2024-11-25 - 21:18:48
      */
-    boolean putFile(MultipartFile file);
+    String putFile(MultipartFile file);
 
     /**
      * 获取文件外链链接

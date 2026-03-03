@@ -89,7 +89,7 @@ public class MonFileFacadeImpl implements IMonFileFacade {
     }
 
     @Override
-    public boolean putFile(MultipartFile file) {
+    public String putFile(MultipartFile file) {
         return monFileService.putFile(file);
     }
 

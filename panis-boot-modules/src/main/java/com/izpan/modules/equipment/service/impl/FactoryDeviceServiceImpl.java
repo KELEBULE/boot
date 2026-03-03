@@ -78,6 +78,8 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
                 .lastMaintainTime(addDTO.getLastMaintainTime())
                 .warrantyPeriod(addDTO.getWarrantyPeriod())
                 .deviceNote(addDTO.getDeviceNote())
+                .modelUrl(addDTO.getModelUrl())
+                .imageUrl(addDTO.getImageUrl())
                 .build();
         return save(device);
     }
@@ -103,6 +105,8 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
                 .lastMaintainTime(updateDTO.getLastMaintainTime())
                 .warrantyPeriod(updateDTO.getWarrantyPeriod())
                 .deviceNote(updateDTO.getDeviceNote())
+                .modelUrl(updateDTO.getModelUrl())
+                .imageUrl(updateDTO.getImageUrl())
                 .build();
         return updateById(device);
     }

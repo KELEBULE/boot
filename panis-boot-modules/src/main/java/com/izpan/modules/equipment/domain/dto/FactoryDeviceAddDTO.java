@@ -55,4 +55,10 @@ public class FactoryDeviceAddDTO implements Serializable {
 
     @Schema(description = "设备备注")
     private String deviceNote;
+
+    @Schema(description = "3D模型URL")
+    private String modelUrl;
+
+    @Schema(description = "设备图片URL")
+    private String imageUrl;
 }
