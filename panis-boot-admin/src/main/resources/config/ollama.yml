@@ -3,8 +3,8 @@ ai:
   ollama:
     # Ollama API地址
     url: http://localhost:11434
-    # 默认模型
-    default-model: gemma3:12b
+    # 默认模型（支持工具调用的模型）
+    default-model: qwen3:14b
     # 连接超时时间(毫秒)
     connect-timeout: 30000
     # 读取超时时间(毫秒)

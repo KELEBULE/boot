@@ -20,7 +20,6 @@ package com.izpan.modules.ai.client;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -48,14 +47,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Ollama客户端工具类
- *
- * @Author payne.zhuang <paynezhuang@gmail.com>
- * @ProjectName panis-boot
- * @ClassName com.izpan.modules.ai.client.OllamaClient
- * @CreateTime 2024-12-20
- */
 @Slf4j
 @Component
 public class OllamaClient {
@@ -103,6 +94,183 @@ public class OllamaClient {
         } catch (Exception e) {
             log.error("调用Ollama API异常", e);
             return Map.of("error", e.getMessage());
+        }
+    }
+
+    public Map<String, Object> chat(String model, List<Map<String, Object>> messages, 
+                                     List<Map<String, Object>> tools, Double temperature, 
+                                     Integer maxTokens, Boolean stream) {
+        try {
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("model", model);
+            requestBody.put("messages", messages);
+            requestBody.put("stream", stream);
+            requestBody.put("options", Map.of(
+                    "temperature", temperature,
+                    "num_predict", maxTokens
+            ));
+
+            if (tools != null && !tools.isEmpty()) {
+                requestBody.put("tools", tools);
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    ollamaUrl + "/api/chat",
+                    entity,
+                    String.class
+            );
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                return objectMapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>() {
+                });
+            } else {
+                log.error("Ollama Chat API调用失败: {}", response.getStatusCode());
+                return Map.of("error", "API调用失败");
+            }
+        } catch (Exception e) {
+            log.error("调用Ollama Chat API异常", e);
+            return Map.of("error", e.getMessage());
+        }
+    }
+
+    public void streamChat(Map<String, Object> requestBody, SseEmitter emitter, 
+                           StringBuilder fullResponse, String sessionId) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            restTemplate.execute(
+                    ollamaUrl + "/api/chat",
+                    HttpMethod.POST,
+                    request -> {
+                        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                        String jsonBody = objectMapper.writeValueAsString(requestBody);
+                        request.getBody().write(jsonBody.getBytes());
+                    },
+                    (ResponseExtractor<Void>) response -> {
+                        try (BufferedReader reader = new BufferedReader(
+                                new InputStreamReader(response.getBody()))) {
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                if (line.trim().isEmpty()) {
+                                    continue;
+                                }
+
+                                try {
+                                    JsonNode chunk = objectMapper.readTree(line);
+                                    JsonNode messageNode = chunk.get("message");
+                                    
+                                    if (messageNode != null) {
+                                        String content = messageNode.has("content") 
+                                                ? messageNode.get("content").asText() : null;
+                                        boolean done = chunk.has("done") && chunk.get("done").asBoolean();
+
+                                        if (content != null && !content.isEmpty()) {
+                                            fullResponse.append(content);
+                                            Map<String, Object> eventData = new HashMap<>();
+                                            eventData.put("content", content);
+                                            eventData.put("done", done);
+                                            emitter.send(SseEmitter.event()
+                                                    .data(eventData)
+                                                    .id(UUID.randomUUID().toString()));
+                                        }
+
+                                        if (done) {
+                                            Map<String, Object> finalEventData = new HashMap<>();
+                                            finalEventData.put("done", true);
+                                            finalEventData.put("sessionId", sessionId);
+                                            emitter.send(SseEmitter.event()
+                                                    .data(finalEventData)
+                                                    .id(UUID.randomUUID().toString()));
+                                            emitter.complete();
+                                            break;
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    log.warn("解析流式数据失败: {}", line, e);
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.error("读取流式响应异常", e);
+                            emitter.completeWithError(e);
+                        }
+                        return null;
+                    }
+            );
+        } catch (Exception e) {
+            log.error("流式生成失败", e);
+            emitter.completeWithError(e);
+        }
+    }
+
+    public void streamGenerate(Map<String, Object> requestBody, SseEmitter emitter, StringBuilder fullResponse, String sessionId) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+            restTemplate.execute(
+                    ollamaUrl + "/api/generate",
+                    HttpMethod.POST,
+                    request -> {
+                        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                        String jsonBody = objectMapper.writeValueAsString(requestBody);
+                        request.getBody().write(jsonBody.getBytes());
+                    },
+                    (ResponseExtractor<Void>) response -> {
+                        try (BufferedReader reader = new BufferedReader(
+                                new InputStreamReader(response.getBody()))) {
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                if (line.trim().isEmpty()) {
+                                    continue;
+                                }
+
+                                try {
+                                    JsonNode chunk = objectMapper.readTree(line);
+                                    String content = chunk.has("response") ? chunk.get("response").asText() : null;
+                                    boolean done = chunk.has("done") && chunk.get("done").asBoolean();
+
+                                    if (content != null && !content.isEmpty()) {
+                                        fullResponse.append(content);
+                                        Map<String, Object> eventData = new HashMap<>();
+                                        eventData.put("content", content);
+                                        eventData.put("done", done);
+                                        emitter.send(SseEmitter.event()
+                                                .data(eventData)
+                                                .id(UUID.randomUUID().toString()));
+                                    }
+
+                                    if (done) {
+                                        Map<String, Object> finalEventData = new HashMap<>();
+                                        finalEventData.put("done", true);
+                                        finalEventData.put("sessionId", sessionId);
+                                        emitter.send(SseEmitter.event()
+                                                .data(finalEventData)
+                                                .id(UUID.randomUUID().toString()));
+                                        emitter.complete();
+                                        break;
+                                    }
+                                } catch (Exception e) {
+                                    log.warn("解析流式数据失败: {}", line, e);
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.error("读取流式响应异常", e);
+                            emitter.completeWithError(e);
+                        }
+                        return null;
+                    }
+            );
+        } catch (Exception e) {
+            log.error("流式生成失败", e);
+            emitter.completeWithError(e);
         }
     }
 
@@ -156,72 +324,6 @@ public class OllamaClient {
         }
     }
 
-    public void streamGenerate(Map<String, Object> requestBody, SseEmitter emitter, StringBuilder fullResponse, String sessionId) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-            restTemplate.execute(
-                    ollamaUrl + "/api/generate",
-                    HttpMethod.POST,
-                    request -> {
-                        request.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                        // 写入请求体
-                        String jsonBody = objectMapper.writeValueAsString(requestBody);
-                        request.getBody().write(jsonBody.getBytes());
-                    },
-                    (ResponseExtractor<Void>) response -> {
-                        try (BufferedReader reader = new BufferedReader(
-                                new InputStreamReader(response.getBody()))) {
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                if (line.trim().isEmpty()) {
-                                    continue;
-                                }
-
-                                try {
-                                    JsonNode chunk = objectMapper.readTree(line);
-                                    String content = chunk.has("response") ? chunk.get("response").asText() : null;
-                                    boolean done = chunk.has("done") && chunk.get("done").asBoolean();
-
-                                    if (content != null && !content.isEmpty()) {
-                                        fullResponse.append(content);
-                                        Map<String, Object> eventData = new HashMap<>();
-                                        eventData.put("content", content);
-                                        eventData.put("done", done);
-                                        emitter.send(SseEmitter.event()
-                                                .data(eventData)
-                                                .id(UUID.randomUUID().toString()));
-                                    }
-
-                                    if (done) {
-                                        Map<String, Object> finalEventData = new HashMap<>();
-                                        finalEventData.put("done", true);
-                                        finalEventData.put("sessionId", sessionId);
-                                        emitter.send(SseEmitter.event()
-                                                .data(finalEventData)
-                                                .id(UUID.randomUUID().toString()));
-                                        emitter.complete();
-                                        break;
-                                    }
-                                } catch (Exception e) {
-                                    log.warn("解析流式数据失败: {}", line, e);
-                                }
-                            }
-                        } catch (Exception e) {
-                            log.error("读取流式响应异常", e);
-                            emitter.completeWithError(e);
-                        }
-                        return null; // 明确返回Void类型
-                    }
-            );
-        } catch (Exception e) {
-            log.error("流式生成失败", e);
-            emitter.completeWithError(e);
-        }
-    }
-
     public String buildPrompt(String message, List<Map<String, String>> history) {
         StringBuilder prompt = new StringBuilder();
 
@@ -244,5 +346,30 @@ public class OllamaClient {
         prompt.append("[INST] ").append(message).append(" [/INST]");
 
         return prompt.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> extractToolCalls(Map<String, Object> response) {
+        List<Map<String, Object>> toolCalls = new ArrayList<>();
+        
+        if (response.containsKey("message")) {
+            Map<String, Object> message = (Map<String, Object>) response.get("message");
+            if (message.containsKey("tool_calls")) {
+                toolCalls = (List<Map<String, Object>>) message.get("tool_calls");
+            }
+        }
+        
+        return toolCalls;
+    }
+
+    @SuppressWarnings("unchecked")
+    public String extractContent(Map<String, Object> response) {
+        if (response.containsKey("message")) {
+            Map<String, Object> message = (Map<String, Object>) response.get("message");
+            if (message.containsKey("content")) {
+                return (String) message.get("content");
+            }
+        }
+        return "";
     }
 }

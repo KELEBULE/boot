@@ -28,15 +28,9 @@ import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
-/**
- * AI聊天响应 DTO 对象
- *
- * @Author payne.zhuang <paynezhuang@gmail.com>
- * @ProjectName panis-boot
- * @ClassName com.izpan.modules.ai.domain.dto.chat.AiChatResponseDTO
- * @CreateTime 2024-12-20
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -68,4 +62,7 @@ public class AiChatResponseDTO implements Serializable {
 
     @Schema(description = "会话ID")
     private String sessionId;
+
+    @Schema(description = "工具调用结果列表")
+    private List<Map<String, Object>> toolResults;
 }
