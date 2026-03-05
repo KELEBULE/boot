@@ -4,6 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.izpan.infrastructure.page.PageQuery;
 import com.izpan.infrastructure.page.RPage;
+import com.izpan.modules.equipment.domain.dto.DeviceScrapDTO;
+import com.izpan.modules.equipment.domain.dto.DeviceStatusChangeDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceAddDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceBatchStatusDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceDeleteDTO;
@@ -14,10 +16,12 @@ import com.izpan.modules.equipment.domain.entity.FactoryDevice;
 import com.izpan.modules.equipment.domain.vo.DeviceDetailStatsVO;
 import com.izpan.modules.equipment.domain.vo.DevicePartTreeVO;
 import com.izpan.modules.equipment.domain.vo.DevicePartVO;
+import com.izpan.modules.equipment.domain.vo.DeviceStatusLogVO;
 import com.izpan.modules.equipment.domain.vo.DeviceStatusOverviewVO;
 import com.izpan.modules.equipment.domain.vo.FactoryDeviceVO;
 import com.izpan.modules.equipment.facade.IFactoryDeviceFacade;
 import com.izpan.modules.equipment.service.IDevicePartService;
+import com.izpan.modules.equipment.service.IDeviceStatusLogService;
 import com.izpan.modules.equipment.service.IFactoryDeviceService;
 import com.izpan.modules.alarm.service.IDeviceAlarmService;
 import com.izpan.modules.workorder.service.IWorkOrderService;
@@ -37,6 +41,7 @@ public class FactoryDeviceFacadeImpl implements IFactoryDeviceFacade {
     private final IDevicePartService devicePartService;
     private final IDeviceAlarmService deviceAlarmService;
     private final IWorkOrderService workOrderService;
+    private final IDeviceStatusLogService deviceStatusLogService;
 
     @Override
     public RPage<FactoryDeviceVO> listFactoryDevicePage(PageQuery pageQuery, FactoryDeviceSearchDTO searchDTO) {
@@ -177,5 +182,22 @@ public class FactoryDeviceFacadeImpl implements IFactoryDeviceFacade {
                 .workOrderCount(workOrderCount)
                 .totalWorkHours(device.getTotalWorkHours())
                 .build();
+    }
+
+    @Override
+    public List<DeviceStatusLogVO> getDeviceStatusLogs(Long deviceId) {
+        return deviceStatusLogService.getDeviceStatusLogsByDeviceId(deviceId);
+    }
+
+    @Override
+    @Transactional
+    public boolean changeDeviceStatus(DeviceStatusChangeDTO statusChangeDTO) {
+        return deviceStatusLogService.changeDeviceStatus(statusChangeDTO);
+    }
+
+    @Override
+    @Transactional
+    public boolean scrapDevices(DeviceScrapDTO scrapDTO) {
+        return deviceStatusLogService.scrapDevices(scrapDTO);
     }
 }

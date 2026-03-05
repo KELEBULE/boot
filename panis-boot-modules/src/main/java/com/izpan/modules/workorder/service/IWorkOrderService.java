@@ -106,4 +106,20 @@ public interface IWorkOrderService extends IService<WorkOrder> {
      * @return 统计数据
      */
     WorkOrderStatisticsVO getStatisticsByUserId(Long userId, String timeRange);
+
+    /**
+     * 检查设备是否有未完成的工单
+     *
+     * @param deviceId 设备ID
+     * @return true-有未完成工单，false-没有未完成工单
+     */
+    boolean hasUnfinishedWorkOrder(Long deviceId);
+
+    /**
+     * 获取设备未完成的工单数量
+     *
+     * @param deviceId 设备ID
+     * @return 未完成工单数量
+     */
+    int countUnfinishedWorkOrders(Long deviceId);
 }

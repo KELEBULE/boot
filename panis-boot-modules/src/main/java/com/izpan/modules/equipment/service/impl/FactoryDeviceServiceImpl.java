@@ -13,7 +13,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.izpan.common.exception.BusinessException;
+import com.izpan.common.exception.BizException;
 import com.izpan.infrastructure.page.PageQuery;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceAddDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceBatchStatusDTO;
@@ -65,7 +65,7 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
         LambdaQueryWrapper<FactoryDevice> checkWrapper = new LambdaQueryWrapper<>();
         checkWrapper.eq(FactoryDevice::getDeviceCode, addDTO.getDeviceCode());
         if (baseMapper.selectCount(checkWrapper) > 0) {
-            throw new BusinessException("设备编码已存在: " + addDTO.getDeviceCode());
+            throw new BizException("设备编码已存在: " + addDTO.getDeviceCode());
         }
 
         FactoryDevice device = FactoryDevice.builder()

@@ -1,15 +1,25 @@
 package com.izpan.modules.workorder.service.impl;
 
-import cn.dev33.satoken.stp.StpUtil;
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.IdUtil;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.izpan.common.exception.BusinessException;
+import com.izpan.common.domain.LoginUser;
+import com.izpan.common.exception.BizException;
 import com.izpan.infrastructure.page.PageQuery;
+import com.izpan.modules.equipment.domain.entity.DeviceStatusLog;
 import com.izpan.modules.equipment.domain.entity.FactoryDevice;
+import com.izpan.modules.equipment.service.IDeviceStatusLogService;
 import com.izpan.modules.equipment.service.IFactoryDeviceService;
 import com.izpan.modules.workorder.domain.dto.WorkOrderAddDTO;
 import com.izpan.modules.workorder.domain.dto.WorkOrderDeleteDTO;
@@ -23,14 +33,11 @@ import com.izpan.modules.workorder.domain.vo.WorkOrderVO;
 import com.izpan.modules.workorder.repository.mapper.WorkOrderLogMapper;
 import com.izpan.modules.workorder.repository.mapper.WorkOrderMapper;
 import com.izpan.modules.workorder.service.IWorkOrderService;
-import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
+import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.IdUtil;
+import lombok.RequiredArgsConstructor;
 
 /**
  * 设备工单管理 Service 服务接口实现层
@@ -40,13 +47,20 @@ import java.util.List;
  * @ClassName com.izpan.modules.workorder.service.impl.WorkOrderServiceImpl
  * @CreateTime 2026-01-27
  */
-
 @Service
 @RequiredArgsConstructor
 public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder> implements IWorkOrderService {
 
     private final WorkOrderLogMapper workOrderLogMapper;
     private final IFactoryDeviceService factoryDeviceService;
+
+    private IDeviceStatusLogService deviceStatusLogService;
+
+    @Autowired
+    @Lazy
+    public void setDeviceStatusLogService(IDeviceStatusLogService deviceStatusLogService) {
+        this.deviceStatusLogService = deviceStatusLogService;
+    }
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
@@ -70,34 +84,34 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     @Transactional
     public boolean addWorkOrder(WorkOrderAddDTO workOrderAddDTO) {
         WorkOrder workOrder = BeanUtil.copyProperties(workOrderAddDTO, WorkOrder.class);
-        
+
         if (StringUtils.isBlank(workOrder.getOrderCode())) {
             workOrder.setOrderCode(generateOrderCode());
         }
-        
+
         if (workOrder.getOrderStatus() == null) {
             workOrder.setOrderStatus(0);
         }
-        
+
         if (workOrder.getPriority() == null) {
             workOrder.setPriority(2);
         }
-        
+
         if (workOrder.getOrderSource() == null) {
             workOrder.setOrderSource(3);
         }
-        
+
         Long currentUserId = getCurrentUserId();
         workOrder.setCreatorId(currentUserId);
         workOrder.setCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        
+
         boolean result = save(workOrder);
-        
+
         if (result) {
             if (workOrder.getDeviceId() != null) {
-                updateDeviceStatusToMaintenance(workOrder.getDeviceId());
+                updateDeviceStatusToMaintenance(workOrder.getDeviceId(), workOrderAddDTO.getFaultDescription(), workOrder.getOrderId(), workOrder.getOrderCode());
             }
-            
+
             WorkOrderLog workOrderLog = WorkOrderLog.builder()
                     .orderId(workOrder.getOrderId())
                     .orderCode(workOrder.getOrderCode())
@@ -110,7 +124,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                     .build();
             saveWorkOrderLog(workOrderLog);
         }
-        
+
         return result;
     }
 
@@ -119,12 +133,12 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     public boolean updateWorkOrder(WorkOrderUpdateDTO workOrderUpdateDTO) {
         WorkOrder existWorkOrder = baseMapper.selectById(workOrderUpdateDTO.getOrderId());
         if (existWorkOrder == null) {
-            throw new BusinessException("工单不存在");
+            throw new BizException("工单不存在");
         }
-        
+
         WorkOrder workOrder = BeanUtil.copyProperties(workOrderUpdateDTO, WorkOrder.class);
         workOrder.setUpdateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        
+
         return updateById(workOrder);
     }
 
@@ -139,23 +153,23 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
     public boolean flowWorkOrder(WorkOrderFlowDTO workOrderFlowDTO) {
         WorkOrder existWorkOrder = baseMapper.selectById(workOrderFlowDTO.getOrderId());
         if (existWorkOrder == null) {
-            throw new BusinessException("工单不存在");
+            throw new BizException("工单不存在");
         }
-        
+
         Integer fromStatus = existWorkOrder.getOrderStatus();
         Integer toStatus = workOrderFlowDTO.getTargetStatus();
         Long fromAssignee = existWorkOrder.getAssigneeId();
         Long toAssignee = workOrderFlowDTO.getAssigneeId();
-        
+
         WorkOrder updateWorkOrder = new WorkOrder();
         updateWorkOrder.setOrderId(workOrderFlowDTO.getOrderId());
-        
+
         int actionType = 2;
-        
+
         if (toStatus != null) {
             updateWorkOrder.setOrderStatus(toStatus);
             actionType = 2;
-            
+
             if (toStatus == 1) {
                 actionType = 4;
                 if (StringUtils.isNotBlank(workOrderFlowDTO.getActualStartTime())) {
@@ -194,24 +208,24 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                 actionType = 7;
             }
         }
-        
+
         if (toAssignee != null) {
             updateWorkOrder.setAssigneeId(toAssignee);
             if (actionType == 2) {
                 actionType = 3;
             }
         }
-        
+
         if (workOrderFlowDTO.getEvaluationScore() != null) {
             updateWorkOrder.setEvaluationScore(workOrderFlowDTO.getEvaluationScore());
             updateWorkOrder.setEvaluationRemark(workOrderFlowDTO.getEvaluationRemark());
             actionType = 8;
         }
-        
+
         updateWorkOrder.setUpdateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        
+
         boolean result = updateById(updateWorkOrder);
-        
+
         if (result) {
             WorkOrderLog workOrderLog = WorkOrderLog.builder()
                     .orderId(workOrderFlowDTO.getOrderId())
@@ -227,7 +241,7 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                     .build();
             saveWorkOrderLog(workOrderLog);
         }
-        
+
         return result;
     }
 
@@ -250,14 +264,14 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
         }
         return statistics;
     }
-    
+
     private String generateOrderCode() {
         String prefix = "WO";
         String timestamp = LocalDateTime.now().format(DATE_TIME_FORMATTER);
         String randomSuffix = String.valueOf(IdUtil.getSnowflakeNextIdStr()).substring(0, 4);
         return prefix + timestamp + randomSuffix;
     }
-    
+
     private Long getCurrentUserId() {
         try {
             return StpUtil.getLoginIdAsLong();
@@ -265,14 +279,60 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             return 1L;
         }
     }
-    
-    private void updateDeviceStatusToMaintenance(Long deviceId) {
+
+    private void updateDeviceStatusToMaintenance(Long deviceId, String faultDescription, Long orderId, String orderCode) {
         FactoryDevice device = factoryDeviceService.getById(deviceId);
         if (device != null && device.getDeviceStatus() != null && device.getDeviceStatus() == 1) {
+            Integer fromStatus = device.getDeviceStatus();
+
             LambdaUpdateWrapper<FactoryDevice> updateWrapper = new LambdaUpdateWrapper<>();
             updateWrapper.eq(FactoryDevice::getDeviceId, deviceId)
                     .set(FactoryDevice::getDeviceStatus, 2);
             factoryDeviceService.update(updateWrapper);
+
+            String currentUserName = getCurrentUserName();
+            DeviceStatusLog statusLog = DeviceStatusLog.builder()
+                    .deviceId(deviceId)
+                    .deviceCode(device.getDeviceCode())
+                    .deviceName(device.getDeviceName())
+                    .fromStatus(fromStatus)
+                    .toStatus(2)
+                    .changeReason(faultDescription != null ? faultDescription : "创建工单自动切换为维修状态")
+                    .relatedOrderId(orderId)
+                    .relatedOrderCode(orderCode)
+                    .operatorId(getCurrentUserId())
+                    .operatorName(currentUserName)
+                    .createTime(LocalDateTime.now())
+                    .build();
+            deviceStatusLogService.saveStatusLog(statusLog);
         }
+    }
+
+    private String getCurrentUserName() {
+        try {
+            LoginUser loginUser = (LoginUser) StpUtil.getSession().get("user");
+            if (loginUser != null && StringUtils.isNotBlank(loginUser.getRealName())) {
+                return loginUser.getRealName();
+            }
+            return "系统";
+        } catch (Exception e) {
+            return "系统";
+        }
+    }
+
+    @Override
+    public boolean hasUnfinishedWorkOrder(Long deviceId) {
+        return countUnfinishedWorkOrders(deviceId) > 0;
+    }
+
+    @Override
+    public int countUnfinishedWorkOrders(Long deviceId) {
+        if (deviceId == null) {
+            return 0;
+        }
+        LambdaQueryWrapper<WorkOrder> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(WorkOrder::getDeviceId, deviceId)
+                .in(WorkOrder::getOrderStatus, 0, 1, 2);
+        return (int) count(queryWrapper);
     }
 }

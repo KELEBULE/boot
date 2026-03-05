@@ -1,17 +1,8 @@
 package com.izpan.infrastructure.handler;
 
-import cn.dev33.satoken.exception.NotLoginException;
-import cn.dev33.satoken.exception.NotPermissionException;
-import com.izpan.common.api.Result;
-import com.izpan.common.api.ResultCode;
-import com.izpan.common.exception.BizException;
-import com.izpan.common.exception.LoginException;
-import com.izpan.common.exception.RouteException;
-import com.izpan.common.pool.StringPools;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -19,8 +10,19 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.izpan.common.api.Result;
+import com.izpan.common.api.ResultCode;
+import com.izpan.common.exception.BizException;
+import com.izpan.common.exception.LoginException;
+import com.izpan.common.exception.RouteException;
+import com.izpan.common.pool.StringPools;
+
+import cn.dev33.satoken.exception.NotLoginException;
+import cn.dev33.satoken.exception.NotPermissionException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 全局异常捕获
@@ -30,7 +32,6 @@ import java.util.stream.Collectors;
  * @ClassName com.izpan.infrastructure.handler.GlobalExceptionHandler
  * @CreateTime 2023/7/8 - 18:42
  */
-
 @Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -126,8 +127,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 处理 BindException
-     * 说明：当使用 @Valid 注解验证 @ModelAttribute 参数或表单数据（非 @RequestBody）失败时抛出此异常
+     * 处理 BindException 说明：当使用 @Valid 注解验证 @ModelAttribute 参数或表单数据（非
+     *
+     * @RequestBody）失败时抛出此异常
      *
      * @param bindException 异常信息
      * @return {@link Result }<{@link Object }> 统一返回结果
@@ -144,8 +146,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 处理 MethodArgumentNotValidException
-     * 说明：当使用 @Valid 注解验证 @RequestBody 参数失败时抛出此异常
+     * 处理 MethodArgumentNotValidException 说明：当使用 @Valid 注解验证 @RequestBody
+     * 参数失败时抛出此异常
      *
      * @param methodArgumentNotValidException 异常信息
      * @return {@link Result }<{@link Object }> 统一返回结果
@@ -162,8 +164,9 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 处理 ConstraintViolationException
-     * 说明：当使用 @Validated 注解验证方法参数（如 @RequestParam、@PathVariable）失败时抛出此异常
+     * 处理 ConstraintViolationException 说明：当使用 @Validated 注解验证方法参数（如
+     *
+     * @RequestParam、@PathVariable）失败时抛出此异常
      *
      * @param constraintViolationException 异常信息
      * @return {@link Result }<{@link Object }> 统一返回结果
