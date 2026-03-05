@@ -4,10 +4,13 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.izpan.common.exception.BusinessException;
 import com.izpan.infrastructure.page.PageQuery;
+import com.izpan.modules.equipment.domain.entity.FactoryDevice;
+import com.izpan.modules.equipment.service.IFactoryDeviceService;
 import com.izpan.modules.workorder.domain.dto.WorkOrderAddDTO;
 import com.izpan.modules.workorder.domain.dto.WorkOrderDeleteDTO;
 import com.izpan.modules.workorder.domain.dto.WorkOrderFlowDTO;
@@ -43,6 +46,7 @@ import java.util.List;
 public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder> implements IWorkOrderService {
 
     private final WorkOrderLogMapper workOrderLogMapper;
+    private final IFactoryDeviceService factoryDeviceService;
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
@@ -90,6 +94,10 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
         boolean result = save(workOrder);
         
         if (result) {
+            if (workOrder.getDeviceId() != null) {
+                updateDeviceStatusToMaintenance(workOrder.getDeviceId());
+            }
+            
             WorkOrderLog workOrderLog = WorkOrderLog.builder()
                     .orderId(workOrder.getOrderId())
                     .orderCode(workOrder.getOrderCode())
@@ -255,6 +263,16 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
             return StpUtil.getLoginIdAsLong();
         } catch (Exception e) {
             return 1L;
+        }
+    }
+    
+    private void updateDeviceStatusToMaintenance(Long deviceId) {
+        FactoryDevice device = factoryDeviceService.getById(deviceId);
+        if (device != null && device.getDeviceStatus() != null && device.getDeviceStatus() == 1) {
+            LambdaUpdateWrapper<FactoryDevice> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(FactoryDevice::getDeviceId, deviceId)
+                    .set(FactoryDevice::getDeviceStatus, 2);
+            factoryDeviceService.update(updateWrapper);
         }
     }
 }

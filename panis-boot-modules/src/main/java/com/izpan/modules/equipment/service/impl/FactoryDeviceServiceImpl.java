@@ -1,17 +1,22 @@
 package com.izpan.modules.equipment.service.impl;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.izpan.common.exception.BusinessException;
 import com.izpan.infrastructure.page.PageQuery;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceAddDTO;
+import com.izpan.modules.equipment.domain.dto.FactoryDeviceBatchStatusDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceDeleteDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceSearchDTO;
 import com.izpan.modules.equipment.domain.dto.FactoryDeviceUpdateDTO;
@@ -144,5 +149,52 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
         LambdaQueryWrapper<DevicePart> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DevicePart::getDeviceId, deviceId);
         devicePartMapper.delete(queryWrapper);
+    }
+
+    @Override
+    public Map<Integer, Long> getDeviceStatusDistribution() {
+        List<FactoryDevice> allDevices = this.list();
+        Map<Integer, Long> distribution = new HashMap<>();
+        distribution.put(1, 0L);
+        distribution.put(2, 0L);
+        distribution.put(0, 0L);
+
+        for (FactoryDevice device : allDevices) {
+            Integer status = device.getDeviceStatus();
+            if (status != null && distribution.containsKey(status)) {
+                distribution.put(status, distribution.get(status) + 1);
+            }
+        }
+        return distribution;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean batchScrapDevice(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return false;
+        }
+
+        LambdaUpdateWrapper<FactoryDevice> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(FactoryDevice::getDeviceId, ids)
+                .set(FactoryDevice::getDeviceStatus, 0)
+                .set(FactoryDevice::getScrapStatus, 1)
+                .set(FactoryDevice::getScrapTime, LocalDateTime.now());
+
+        return update(updateWrapper);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean batchUpdateDeviceStatus(FactoryDeviceBatchStatusDTO batchStatusDTO) {
+        if (batchStatusDTO.getIds() == null || batchStatusDTO.getIds().isEmpty()) {
+            return false;
+        }
+
+        LambdaUpdateWrapper<FactoryDevice> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(FactoryDevice::getDeviceId, batchStatusDTO.getIds())
+                .set(FactoryDevice::getDeviceStatus, batchStatusDTO.getDeviceStatus());
+
+        return update(updateWrapper);
     }
 }

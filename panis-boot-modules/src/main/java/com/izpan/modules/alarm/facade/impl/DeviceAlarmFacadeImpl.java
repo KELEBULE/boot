@@ -20,8 +20,15 @@ import com.izpan.modules.alarm.domain.dto.devicealarm.DeviceAlarmConfirmDTO;
 import com.izpan.modules.alarm.domain.dto.devicealarm.DeviceAlarmCreateWorkOrderDTO;
 import com.izpan.modules.alarm.domain.dto.devicealarm.DeviceAlarmSearchDTO;
 import com.izpan.modules.alarm.domain.entity.DeviceAlarm;
+import com.izpan.modules.alarm.domain.vo.AlarmLevelDistributionVO;
+import com.izpan.modules.alarm.domain.vo.DailyAlarmTrendVO;
 import com.izpan.modules.alarm.domain.vo.DeviceAlarmExportVO;
+import com.izpan.modules.alarm.domain.vo.DeviceAlarmLevelStatsVO;
+import com.izpan.modules.alarm.domain.vo.DeviceAlarmTopVO;
 import com.izpan.modules.alarm.domain.vo.DeviceAlarmVO;
+import com.izpan.modules.alarm.domain.vo.FrequentAlarmPartVO;
+import com.izpan.modules.alarm.domain.vo.FrequentAlarmTimeVO;
+import com.izpan.modules.alarm.domain.vo.TemperatureTrendVO;
 import com.izpan.modules.alarm.facade.IDeviceAlarmFacade;
 import com.izpan.modules.alarm.service.IDeviceAlarmService;
 import com.izpan.modules.detection.domain.entity.DeviceDetectionRecord;
@@ -197,6 +204,10 @@ public class DeviceAlarmFacadeImpl implements IDeviceAlarmFacade {
         boolean saved = workOrderService.save(workOrder);
 
         if (saved) {
+            if (deviceAlarm.getDeviceId() != null) {
+                updateDeviceStatusToMaintenance(deviceAlarm.getDeviceId());
+            }
+            
             LambdaUpdateWrapper<DeviceAlarm> updateWrapper = new LambdaUpdateWrapper<DeviceAlarm>()
                     .eq(DeviceAlarm::getAlarmId, deviceAlarmCreateWorkOrderDTO.getAlarmId())
                     .set(DeviceAlarm::getHandleUserId, currentUserId)
@@ -361,5 +372,272 @@ public class DeviceAlarmFacadeImpl implements IDeviceAlarmFacade {
         }
 
         return vo;
+    }
+
+    @Override
+    public AlarmLevelDistributionVO getAlarmLevelDistribution() {
+        Map<Integer, Long> distribution = deviceAlarmService.getAlarmLevelDistribution();
+        long total = distribution.values().stream().mapToLong(Long::longValue).sum();
+        
+        List<AlarmLevelDistributionVO.LevelItem> items = distribution.entrySet().stream()
+                .map(entry -> {
+                    double percentage = total > 0 
+                            ? Math.round(entry.getValue() * 1000.0 / total) / 10.0 
+                            : 0.0;
+                    String levelName = switch (entry.getKey()) {
+                        case 1 -> "一级报警";
+                        case 2 -> "二级报警";
+                        case 3 -> "三级报警";
+                        default -> "未知";
+                    };
+                    return AlarmLevelDistributionVO.LevelItem.builder()
+                            .level(entry.getKey())
+                            .levelName(levelName)
+                            .count(entry.getValue())
+                            .percentage(percentage)
+                            .build();
+                })
+                .collect(Collectors.toList());
+        
+        return AlarmLevelDistributionVO.builder()
+                .levelDistribution(items)
+                .build();
+    }
+
+    @Override
+    public DeviceAlarmTopVO getDeviceAlarmTop(int limit) {
+        List<Map<String, Object>> topDevices = deviceAlarmService.getDeviceAlarmTop(limit);
+        
+        List<DeviceAlarmTopVO.DeviceAlarmItem> items = topDevices.stream()
+                .map(map -> DeviceAlarmTopVO.DeviceAlarmItem.builder()
+                        .deviceId(((Number) map.get("deviceId")).longValue())
+                        .deviceName((String) map.get("deviceName"))
+                        .level1Count(((Number) map.get("level1Count")).longValue())
+                        .level2Count(((Number) map.get("level2Count")).longValue())
+                        .level3Count(((Number) map.get("level3Count")).longValue())
+                        .totalCount(((Number) map.get("totalCount")).longValue())
+                        .build())
+                .collect(Collectors.toList());
+        
+        return DeviceAlarmTopVO.builder()
+                .deviceAlarmList(items)
+                .build();
+    }
+
+    @Override
+    public FrequentAlarmPartVO getFrequentAlarmParts(Long deviceId, String startTime, String endTime) {
+        List<Map<String, Object>> parts = deviceAlarmService.getFrequentAlarmParts(deviceId, startTime, endTime);
+        
+        if (parts.isEmpty()) {
+            return FrequentAlarmPartVO.builder().partList(List.of()).build();
+        }
+        
+        long total = parts.stream()
+                .mapToLong(m -> ((Number) m.get("alarmCount")).longValue())
+                .sum();
+        
+        List<FrequentAlarmPartVO.PartItem> items = parts.stream()
+                .map(map -> {
+                    long count = ((Number) map.get("alarmCount")).longValue();
+                    double percentage = total > 0 ? Math.round(count * 1000.0 / total) / 10.0 : 0.0;
+                    return FrequentAlarmPartVO.PartItem.builder()
+                            .partId(((Number) map.get("partId")).longValue())
+                            .partName((String) map.get("partName"))
+                            .partCode((String) map.get("partCode"))
+                            .alarmCount(count)
+                            .percentage(percentage)
+                            .build();
+                })
+                .collect(Collectors.toList());
+        
+        return FrequentAlarmPartVO.builder()
+                .partList(items)
+                .build();
+    }
+
+    @Override
+    public FrequentAlarmTimeVO getFrequentAlarmTime(Long deviceId, String startTime, String endTime) {
+        List<Map<String, Object>> hourlyData = deviceAlarmService.getFrequentAlarmTime(deviceId, startTime, endTime);
+        
+        List<FrequentAlarmTimeVO.HourlyItem> items = new java.util.ArrayList<>();
+        for (int hour = 0; hour < 24; hour++) {
+            final int h = hour;
+            Map<String, Object> hourData = hourlyData.stream()
+                    .filter(m -> ((Number) m.get("hour")).intValue() == h)
+                    .findFirst()
+                    .orElse(null);
+            
+            items.add(FrequentAlarmTimeVO.HourlyItem.builder()
+                    .hour(h)
+                    .alarmCount(hourData != null ? ((Number) hourData.get("alarmCount")).longValue() : 0L)
+                    .build());
+        }
+        
+        return FrequentAlarmTimeVO.builder()
+                .hourlyDistribution(items)
+                .build();
+    }
+
+    @Override
+    public DeviceAlarmLevelStatsVO getAlarmLevelStats(Long deviceId, String startTime, String endTime) {
+        Map<Integer, Long> distribution = deviceAlarmService.getAlarmLevelStatsByDevice(deviceId, startTime, endTime);
+        long total = distribution.values().stream().mapToLong(Long::longValue).sum();
+        
+        List<DeviceAlarmLevelStatsVO.LevelStatsItem> items = distribution.entrySet().stream()
+                .map(entry -> {
+                    double percentage = total > 0 
+                            ? Math.round(entry.getValue() * 1000.0 / total) / 10.0 
+                            : 0.0;
+                    String levelName = switch (entry.getKey()) {
+                        case 1 -> "一级报警";
+                        case 2 -> "二级报警";
+                        case 3 -> "三级报警";
+                        default -> "未知";
+                    };
+                    return DeviceAlarmLevelStatsVO.LevelStatsItem.builder()
+                            .level(entry.getKey())
+                            .levelName(levelName)
+                            .count(entry.getValue())
+                            .percentage(percentage)
+                            .build();
+                })
+                .collect(Collectors.toList());
+        
+        return DeviceAlarmLevelStatsVO.builder()
+                .levelStats(items)
+                .build();
+    }
+
+    @Override
+    public TemperatureTrendVO getTemperatureTrend(Long deviceId, String startTime, String endTime) {
+        List<Map<String, Object>> trendData = deviceAlarmService.getTemperatureTrend(deviceId, startTime, endTime);
+        
+        List<TemperatureTrendVO.TrendItem> items = trendData.stream()
+                .map(map -> TemperatureTrendVO.TrendItem.builder()
+                        .detectTime(map.get("detectTime") != null ? map.get("detectTime").toString() : null)
+                        .detectValue(map.get("detectValue") != null ? new java.math.BigDecimal(map.get("detectValue").toString()) : null)
+                        .level1Value(map.get("level1Value") != null ? new java.math.BigDecimal(map.get("level1Value").toString()) : null)
+                        .level2Value(map.get("level2Value") != null ? new java.math.BigDecimal(map.get("level2Value").toString()) : null)
+                        .level3Value(map.get("level3Value") != null ? new java.math.BigDecimal(map.get("level3Value").toString()) : null)
+                        .build())
+                .collect(Collectors.toList());
+        
+        return TemperatureTrendVO.builder()
+                .trendData(items)
+                .build();
+    }
+
+    @Override
+    public DailyAlarmTrendVO getDailyAlarmTrend(Long deviceId, String startTime, String endTime) {
+        List<Map<String, Object>> dailyData = deviceAlarmService.getDailyAlarmTrend(deviceId, startTime, endTime);
+        
+        List<DailyAlarmTrendVO.DailyItem> items = dailyData.stream()
+                .map(map -> DailyAlarmTrendVO.DailyItem.builder()
+                        .date(map.get("date") != null ? map.get("date").toString() : null)
+                        .alarmCount(((Number) map.get("alarmCount")).longValue())
+                        .build())
+                .collect(Collectors.toList());
+        
+        return DailyAlarmTrendVO.builder()
+                .dailyData(items)
+                .build();
+    }
+
+    @Override
+    public TemperatureTrendVO getPartTemperatureTrend(Long partId, String startTime, String endTime) {
+        List<Map<String, Object>> trendData = deviceAlarmService.getPartTemperatureTrend(partId, startTime, endTime);
+        
+        List<TemperatureTrendVO.TrendItem> items = trendData.stream()
+                .map(map -> TemperatureTrendVO.TrendItem.builder()
+                        .detectTime(map.get("detectTime") != null ? map.get("detectTime").toString() : null)
+                        .detectValue(map.get("detectValue") != null ? new java.math.BigDecimal(map.get("detectValue").toString()) : null)
+                        .level1Value(map.get("level1Value") != null ? new java.math.BigDecimal(map.get("level1Value").toString()) : null)
+                        .level2Value(map.get("level2Value") != null ? new java.math.BigDecimal(map.get("level2Value").toString()) : null)
+                        .level3Value(map.get("level3Value") != null ? new java.math.BigDecimal(map.get("level3Value").toString()) : null)
+                        .build())
+                .collect(Collectors.toList());
+        
+        return TemperatureTrendVO.builder()
+                .trendData(items)
+                .build();
+    }
+
+    @Override
+    public TemperatureTrendVO getPartAlarmTemperatureTrend(Long partId, String startTime, String endTime) {
+        List<Map<String, Object>> trendData = deviceAlarmService.getPartAlarmTemperatureTrend(partId, startTime, endTime);
+        
+        List<TemperatureTrendVO.TrendItem> items = trendData.stream()
+                .map(map -> TemperatureTrendVO.TrendItem.builder()
+                        .detectTime(map.get("detectTime") != null ? map.get("detectTime").toString() : null)
+                        .detectValue(map.get("detectValue") != null ? new java.math.BigDecimal(map.get("detectValue").toString()) : null)
+                        .build())
+                .collect(Collectors.toList());
+        
+        return TemperatureTrendVO.builder()
+                .trendData(items)
+                .build();
+    }
+
+    @Override
+    public FrequentAlarmTimeVO getPartHourlyAlarmDistribution(Long partId, String startTime, String endTime) {
+        List<Map<String, Object>> hourlyData = deviceAlarmService.getPartHourlyAlarmDistribution(partId, startTime, endTime);
+        
+        List<FrequentAlarmTimeVO.HourlyItem> items = new java.util.ArrayList<>();
+        for (int hour = 0; hour < 24; hour++) {
+            final int h = hour;
+            Map<String, Object> hourData = hourlyData.stream()
+                    .filter(m -> ((Number) m.get("hour")).intValue() == h)
+                    .findFirst()
+                    .orElse(null);
+            
+            items.add(FrequentAlarmTimeVO.HourlyItem.builder()
+                    .hour(h)
+                    .alarmCount(hourData != null ? ((Number) hourData.get("alarmCount")).longValue() : 0L)
+                    .build());
+        }
+        
+        return FrequentAlarmTimeVO.builder()
+                .hourlyDistribution(items)
+                .build();
+    }
+
+    @Override
+    public DeviceAlarmLevelStatsVO getPartAlarmLevelDistribution(Long partId, String startTime, String endTime) {
+        Map<Integer, Long> distribution = deviceAlarmService.getPartAlarmLevelStats(partId, startTime, endTime);
+        long total = distribution.values().stream().mapToLong(Long::longValue).sum();
+        
+        List<DeviceAlarmLevelStatsVO.LevelStatsItem> items = distribution.entrySet().stream()
+                .map(entry -> {
+                    double percentage = total > 0 
+                            ? Math.round(entry.getValue() * 1000.0 / total) / 10.0 
+                            : 0.0;
+                    String levelName = switch (entry.getKey()) {
+                        case 1 -> "一级报警";
+                        case 2 -> "二级报警";
+                        case 3 -> "三级报警";
+                        default -> "未知";
+                    };
+                    return DeviceAlarmLevelStatsVO.LevelStatsItem.builder()
+                            .level(entry.getKey())
+                            .levelName(levelName)
+                            .count(entry.getValue())
+                            .percentage(percentage)
+                            .build();
+                })
+                .collect(Collectors.toList());
+        
+        return DeviceAlarmLevelStatsVO.builder()
+                .levelStats(items)
+                .build();
+    }
+    
+    private void updateDeviceStatusToMaintenance(Long deviceId) {
+        FactoryDevice device = factoryDeviceService.getById(deviceId);
+        if (device != null && device.getDeviceStatus() != null && device.getDeviceStatus() == 1) {
+            LambdaUpdateWrapper<FactoryDevice> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(FactoryDevice::getDeviceId, deviceId)
+                    .set(FactoryDevice::getDeviceStatus, 2);
+            factoryDeviceService.update(updateWrapper);
+        }
     }
 }
