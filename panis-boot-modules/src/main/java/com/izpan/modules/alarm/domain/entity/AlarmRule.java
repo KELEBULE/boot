@@ -11,6 +11,7 @@ import lombok.experimental.SuperBuilder;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Data
 @SuperBuilder
@@ -34,6 +35,12 @@ public class AlarmRule implements Serializable {
     private String alarmLevels;
 
     private String notifyTargetIds;
+
+    private LocalTime pushStartTime;
+
+    private LocalTime pushEndTime;
+
+    private Integer pushInterval;
 
     private Integer ruleStatus;
 

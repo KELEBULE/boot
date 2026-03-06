@@ -9,6 +9,7 @@ import lombok.experimental.SuperBuilder;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -38,6 +39,15 @@ public class AlarmRuleVO implements Serializable {
 
     @Schema(description = "通知目标ID列表")
     private List<String> notifyTargetIds;
+
+    @Schema(description = "推送开始时间")
+    private LocalTime pushStartTime;
+
+    @Schema(description = "推送结束时间")
+    private LocalTime pushEndTime;
+
+    @Schema(description = "重复推送间隔(分钟)")
+    private Integer pushInterval;
 
     @Schema(description = "规则状态(0:禁用 1:启用)")
     private Integer ruleStatus;

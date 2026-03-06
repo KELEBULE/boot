@@ -57,7 +57,8 @@ public class InterceptorConfiguration implements WebMvcConfigurer {
         "/email/send_code",
         "/email/verify_code",
         "/device_detection_record/receive",
-        "/device_detection_record/receive/batch"
+        "/device_detection_record/receive/batch",
+        "/ws/**"
     };
 
     @Override

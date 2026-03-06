@@ -1,11 +1,13 @@
 package com.izpan.modules.alarm.domain.dto.alarmrule;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalTime;
 import java.util.List;
 
 @Getter
@@ -33,6 +35,17 @@ public class AlarmRuleUpdateDTO implements Serializable {
 
     @Schema(description = "通知目标ID列表")
     private List<String> notifyTargetIds;
+
+    @Schema(description = "推送开始时间")
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime pushStartTime;
+
+    @Schema(description = "推送结束时间")
+    @JsonFormat(pattern = "HH:mm")
+    private LocalTime pushEndTime;
+
+    @Schema(description = "重复推送间隔(分钟)")
+    private Integer pushInterval;
 
     @Schema(description = "规则状态(0:禁用 1:启用)")
     private Integer ruleStatus;

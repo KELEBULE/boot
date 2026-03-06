@@ -4,10 +4,12 @@ import cn.hutool.core.date.DatePattern;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.izpan.infrastructure.gson.adapter.LocalDateTimeTypeAdapter;
+import com.izpan.infrastructure.gson.adapter.LocalTimeTypeAdapter;
 import com.izpan.infrastructure.gson.adapter.StringAdapter;
 
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +29,7 @@ public class GsonUtil {
             // 防止特殊字符出现乱码
             .disableHtmlEscaping()
             .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter())
+            .registerTypeAdapter(LocalTime.class, new LocalTimeTypeAdapter())
             .registerTypeAdapter(String.class, new StringAdapter())
             .create();
 
