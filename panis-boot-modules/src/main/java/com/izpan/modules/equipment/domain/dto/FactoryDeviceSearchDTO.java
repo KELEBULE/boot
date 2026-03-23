@@ -23,9 +23,6 @@ public class FactoryDeviceSearchDTO implements Serializable {
     @Schema(description = "设备状态 0-报废 1-正常 2-维护中 3-故障")
     private Integer deviceStatus;
 
-    @Schema(description = "设备类型ID")
-    private Long typeId;
-
     @Schema(description = "位置ID")
     private Long locationId;
 

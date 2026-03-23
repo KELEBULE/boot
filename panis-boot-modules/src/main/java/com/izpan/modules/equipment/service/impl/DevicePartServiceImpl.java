@@ -56,7 +56,6 @@ public class DevicePartServiceImpl extends ServiceImpl<DevicePartMapper, DeviceP
                 .deviceId(addDTO.getDeviceId())
                 .partType(addDTO.getPartType())
                 .monitorEnabled(addDTO.getMonitorEnabled())
-                .installPosition(addDTO.getInstallPosition())
                 .partStatus(addDTO.getPartStatus())
                 .build();
         return save(part);
@@ -77,7 +76,6 @@ public class DevicePartServiceImpl extends ServiceImpl<DevicePartMapper, DeviceP
                 .deviceId(updateDTO.getDeviceId())
                 .partType(updateDTO.getPartType())
                 .monitorEnabled(updateDTO.getMonitorEnabled())
-                .installPosition(updateDTO.getInstallPosition())
                 .partStatus(updateDTO.getPartStatus())
                 .build();
         return updateById(part);

@@ -42,14 +42,8 @@ public class DevicePart implements Serializable {
     @JsonProperty("monitorEnabled")
     private Integer monitorEnabled;
 
-    @JsonProperty("installPosition")
-    private String installPosition;
-
     @JsonProperty("partStatus")
     private Integer partStatus;
-
-    @JsonProperty("modelNodeName")
-    private String modelNodeName;
 
     @JsonProperty("createTime")
     private LocalDateTime createTime;

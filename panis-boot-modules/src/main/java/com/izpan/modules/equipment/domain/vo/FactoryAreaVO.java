@@ -10,7 +10,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -51,14 +50,6 @@ public class FactoryAreaVO implements Serializable {
     @Schema(description = "区域类型")
     @JsonProperty("areaType")
     private Integer areaType;
-
-    @Schema(description = "经度")
-    @JsonProperty("longitude")
-    private BigDecimal longitude;
-
-    @Schema(description = "纬度")
-    @JsonProperty("latitude")
-    private BigDecimal latitude;
 
     @Schema(description = "区域状态")
     @JsonProperty("areaStatus")

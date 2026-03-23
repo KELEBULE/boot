@@ -42,7 +42,6 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
         queryWrapper.like(StringUtils.isNotBlank(searchDTO.getDeviceCode()), FactoryDevice::getDeviceCode, searchDTO.getDeviceCode())
                 .like(StringUtils.isNotBlank(searchDTO.getDeviceName()), FactoryDevice::getDeviceName, searchDTO.getDeviceName())
                 .eq(searchDTO.getDeviceStatus() != null, FactoryDevice::getDeviceStatus, searchDTO.getDeviceStatus())
-                .eq(searchDTO.getTypeId() != null, FactoryDevice::getTypeId, searchDTO.getTypeId())
                 .eq(searchDTO.getLocationId() != null, FactoryDevice::getLocationId, searchDTO.getLocationId())
                 .like(StringUtils.isNotBlank(searchDTO.getManufacturer()), FactoryDevice::getManufacturer, searchDTO.getManufacturer())
                 .orderByDesc(FactoryDevice::getCreateTime);
@@ -72,7 +71,6 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
                 .deviceCode(addDTO.getDeviceCode())
                 .deviceName(addDTO.getDeviceName())
                 .deviceModel(addDTO.getDeviceModel())
-                .typeId(addDTO.getTypeId())
                 .locationId(addDTO.getLocationId())
                 .installTime(addDTO.getInstallTime())
                 .startUseTime(addDTO.getStartUseTime())
@@ -96,7 +94,6 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
                 .deviceCode(updateDTO.getDeviceCode())
                 .deviceName(updateDTO.getDeviceName())
                 .deviceModel(updateDTO.getDeviceModel())
-                .typeId(updateDTO.getTypeId())
                 .locationId(updateDTO.getLocationId())
                 .installTime(updateDTO.getInstallTime())
                 .startUseTime(updateDTO.getStartUseTime())

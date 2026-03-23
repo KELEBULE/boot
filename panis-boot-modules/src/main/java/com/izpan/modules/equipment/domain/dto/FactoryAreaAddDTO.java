@@ -5,7 +5,6 @@ import lombok.Data;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.math.BigDecimal;
 
 @Data
 @Schema(name = "FactoryAreaAddDTO", description = "厂区新增 DTO 对象")
@@ -28,12 +27,6 @@ public class FactoryAreaAddDTO implements Serializable {
 
     @Schema(description = "区域类型")
     private Integer areaType;
-
-    @Schema(description = "经度")
-    private BigDecimal longitude;
-
-    @Schema(description = "纬度")
-    private BigDecimal latitude;
 
     @Schema(description = "区域状态")
     private Integer areaStatus;

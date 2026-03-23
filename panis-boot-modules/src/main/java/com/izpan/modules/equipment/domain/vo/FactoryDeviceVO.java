@@ -43,10 +43,6 @@ public class FactoryDeviceVO implements Serializable {
     @JsonProperty("deviceModel")
     private String deviceModel;
 
-    @Schema(description = "设备类型ID")
-    @JsonProperty("typeId")
-    private Long typeId;
-
     @Schema(description = "位置ID")
     @JsonProperty("locationId")
     private Long locationId;

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.quartz.SchedulerException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +29,7 @@ import com.izpan.modules.alarm.domain.vo.AlarmRuleVO;
 import com.izpan.modules.alarm.domain.vo.DeviceTreeVO;
 import com.izpan.modules.alarm.domain.vo.OrgUserTreeVO;
 import com.izpan.modules.alarm.facade.IAlarmRuleFacade;
-import com.izpan.modules.alarm.repository.mapper.DeviceTypeSimple;
+import com.izpan.modules.alarm.service.IAlarmPushSchedulerService;
 import com.izpan.modules.alarm.service.IAlarmRuleService;
 import com.izpan.modules.equipment.domain.entity.FactoryArea;
 import com.izpan.modules.equipment.domain.entity.FactoryDevice;
@@ -57,6 +58,7 @@ public class AlarmRuleFacadeImpl implements IAlarmRuleFacade {
     private final ISysUserService sysUserService;
     private final ISysUserOrgService sysUserOrgService;
     private final ObjectMapper objectMapper;
+    private final IAlarmPushSchedulerService alarmPushSchedulerService;
 
     public AlarmRuleFacadeImpl(
             IAlarmRuleService alarmRuleService,
@@ -66,7 +68,8 @@ public class AlarmRuleFacadeImpl implements IAlarmRuleFacade {
             ISysOrgUnitsService sysOrgUnitsService,
             @Lazy ISysUserService sysUserService,
             ISysUserOrgService sysUserOrgService,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            IAlarmPushSchedulerService alarmPushSchedulerService) {
         this.alarmRuleService = alarmRuleService;
         this.factoryInfoService = factoryInfoService;
         this.factoryAreaService = factoryAreaService;
@@ -75,6 +78,7 @@ public class AlarmRuleFacadeImpl implements IAlarmRuleFacade {
         this.sysUserService = sysUserService;
         this.sysUserOrgService = sysUserOrgService;
         this.objectMapper = objectMapper;
+        this.alarmPushSchedulerService = alarmPushSchedulerService;
     }
 
     @Override
@@ -97,26 +101,66 @@ public class AlarmRuleFacadeImpl implements IAlarmRuleFacade {
     @Transactional
     public boolean add(AlarmRuleAddDTO alarmRuleAddDTO) {
         AlarmRule alarmRule = convertToEntity(alarmRuleAddDTO);
-        return alarmRuleService.save(alarmRule);
+        boolean saved = alarmRuleService.save(alarmRule);
+        if (saved && alarmRule.getRuleStatus() == 1) {
+            createOrUpdateQuartzJob(alarmRule);
+        }
+        return saved;
     }
 
     @Override
     @Transactional
     public boolean update(AlarmRuleUpdateDTO alarmRuleUpdateDTO) {
         AlarmRule alarmRule = convertToEntity(alarmRuleUpdateDTO);
-        return alarmRuleService.updateById(alarmRule);
+        boolean updated = alarmRuleService.updateById(alarmRule);
+        if (updated) {
+            manageQuartzJob(alarmRule);
+        }
+        return updated;
     }
 
     @Override
-    @Transactional
     public boolean batchDelete(AlarmRuleDeleteDTO alarmRuleDeleteDTO) {
         AlarmRuleBO alarmRuleBO = CglibUtil.convertObj(alarmRuleDeleteDTO, AlarmRuleBO::new);
-        return alarmRuleService.removeBatchByIds(alarmRuleBO.getIds(), true);
+        List<Long> ids = alarmRuleBO.getIds();
+        for (Long id : ids) {
+            deleteQuartzJob(id);
+        }
+        return alarmRuleService.removeBatchByIds(ids, true);
     }
 
-    @Override
-    public List<DeviceTypeSimple> queryAllDeviceTypes() {
-        return alarmRuleService.queryAllDeviceTypes();
+    private void createOrUpdateQuartzJob(AlarmRule alarmRule) {
+        try {
+            if (alarmPushSchedulerService.checkExists(alarmRule.getRuleId())) {
+                alarmPushSchedulerService.updateJob(alarmRule.getRuleId(), alarmRule.getPushInterval());
+            } else {
+                alarmPushSchedulerService.createJob(alarmRule.getRuleId(), alarmRule.getPushInterval());
+            }
+            log.info("Created/Updated Quartz job for rule: ruleId={}", alarmRule.getRuleId());
+        } catch (SchedulerException e) {
+            log.error("Failed to create/update Quartz job for rule: ruleId={}", alarmRule.getRuleId(), e);
+        }
+    }
+
+    private void manageQuartzJob(AlarmRule alarmRule) {
+        try {
+            if (alarmRule.getRuleStatus() == 1) {
+                createOrUpdateQuartzJob(alarmRule);
+            } else {
+                deleteQuartzJob(alarmRule.getRuleId());
+            }
+        } catch (Exception e) {
+            log.error("Failed to manage Quartz job for rule: ruleId={}", alarmRule.getRuleId(), e);
+        }
+    }
+
+    private void deleteQuartzJob(Long ruleId) {
+        try {
+            alarmPushSchedulerService.deleteJob(ruleId);
+            log.info("Deleted Quartz job for rule: ruleId={}", ruleId);
+        } catch (SchedulerException e) {
+            log.error("Failed to delete Quartz job for rule: ruleId={}", ruleId, e);
+        }
     }
 
     private AlarmRuleVO convertToVO(AlarmRule alarmRule) {

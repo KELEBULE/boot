@@ -48,9 +48,6 @@ public class MonitorDeviceTreeVO implements Serializable {
     @Schema(description = "设备图片URL(仅设备有)")
     private String imageUrl;
 
-    @Schema(description = "模型节点名称(仅部件有)")
-    private String modelNodeName;
-
     @Schema(description = "设备状态(仅设备有)")
     private Integer deviceStatus;
 

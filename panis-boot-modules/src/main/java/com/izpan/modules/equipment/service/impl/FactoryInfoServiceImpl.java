@@ -232,7 +232,6 @@ public class FactoryInfoServiceImpl extends ServiceImpl<FactoryInfoMapper, Facto
                                 .parentId(device.getDeviceId())
                                 .deviceId(device.getDeviceId())
                                 .modelUrl(modelUrl)
-                                .modelNodeName(part.getModelNodeName())
                                 .partStatus(part.getPartStatus())
                                 .hasAlarm(false)
                                 .build();
@@ -313,7 +312,6 @@ public class FactoryInfoServiceImpl extends ServiceImpl<FactoryInfoMapper, Facto
                 .alarmPartId(latestAlarm.getPartId())
                 .alarmPartCode(part != null ? part.getPartCode() : null)
                 .alarmPartName(part != null ? part.getPartName() : null)
-                .alarmPartModelNodeName(part != null ? part.getModelNodeName() : null)
                 .alarmLevel(latestAlarm.getAlarmLevel())
                 .alarmTime(latestAlarm.getAlarmTime() != null ? latestAlarm.getAlarmTime().toString() : null)
                 .hasModel(StringUtils.isNotBlank(device.getModelUrl()))

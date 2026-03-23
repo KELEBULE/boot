@@ -17,8 +17,10 @@ import com.izpan.modules.equipment.domain.entity.FactoryDevice;
 import com.izpan.modules.equipment.service.IDevicePartService;
 import com.izpan.modules.equipment.service.IFactoryDeviceService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.quartz.Job;
+import org.quartz.JobDataMap;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -28,117 +30,65 @@ import java.util.List;
 import java.util.Set;
 
 @Slf4j
-@Component
-public class AlarmPushJob {
+public class AlarmPushJob implements Job {
 
-    private final IDeviceAlarmService deviceAlarmService;
-    private final IAlarmRuleService alarmRuleService;
-    private final IAlarmNoticeService alarmNoticeService;
-    private final IFactoryDeviceService factoryDeviceService;
-    private final IDevicePartService devicePartService;
-    private final AlarmWebSocketHandler alarmWebSocketHandler;
-    private final ObjectMapper objectMapper;
+    @Override
+    public void execute(JobExecutionContext context) throws JobExecutionException {
+        JobDataMap dataMap = context.getJobDetail().getJobDataMap();
+        Long ruleId = Long.parseLong(dataMap.getString("ruleId"));
 
-    public AlarmPushJob(
-            IDeviceAlarmService deviceAlarmService,
-            IAlarmRuleService alarmRuleService,
-            IAlarmNoticeService alarmNoticeService,
-            IFactoryDeviceService factoryDeviceService,
-            IDevicePartService devicePartService,
-            AlarmWebSocketHandler alarmWebSocketHandler,
-            ObjectMapper objectMapper) {
-        this.deviceAlarmService = deviceAlarmService;
-        this.alarmRuleService = alarmRuleService;
-        this.alarmNoticeService = alarmNoticeService;
-        this.factoryDeviceService = factoryDeviceService;
-        this.devicePartService = devicePartService;
-        this.alarmWebSocketHandler = alarmWebSocketHandler;
-        this.objectMapper = objectMapper;
-    }
+        log.info("执行报警推送任务: ruleId={}", ruleId);
 
-    @Scheduled(fixedRate = 60000)
-    public void execute() {
-        log.info("开始执行报警推送定时任务...");
-        
-        LocalDateTime now = LocalDateTime.now();
-        LocalTime currentTime = now.toLocalTime();
+        try {
+            IAlarmRuleService alarmRuleService = SpringContext.getBean(IAlarmRuleService.class);
+            IDeviceAlarmService deviceAlarmService = SpringContext.getBean(IDeviceAlarmService.class);
+            IAlarmNoticeService alarmNoticeService = SpringContext.getBean(IAlarmNoticeService.class);
+            IFactoryDeviceService factoryDeviceService = SpringContext.getBean(IFactoryDeviceService.class);
+            IDevicePartService devicePartService = SpringContext.getBean(IDevicePartService.class);
+            AlarmWebSocketHandler alarmWebSocketHandler = SpringContext.getBean(AlarmWebSocketHandler.class);
+            ObjectMapper objectMapper = SpringContext.getBean(ObjectMapper.class);
 
-        LambdaQueryWrapper<DeviceAlarm> queryWrapper = new LambdaQueryWrapper<DeviceAlarm>()
-                .eq(DeviceAlarm::getConfirmStatus, 0)
-                .orderByAsc(DeviceAlarm::getAlarmTime);
-        
-        List<DeviceAlarm> unconfirmedAlarms = deviceAlarmService.list(queryWrapper);
-        log.info("查询到 {} 条未确认报警", unconfirmedAlarms.size());
-
-        List<AlarmRule> allRules = alarmRuleService.list(
-            new LambdaQueryWrapper<AlarmRule>().eq(AlarmRule::getRuleStatus, 1)
-        );
-
-        for (DeviceAlarm alarm : unconfirmedAlarms) {
-            AlarmRule rule = findMatchingRule(alarm, allRules);
-            if (rule == null) {
-                log.debug("未找到匹配的报警规则, alarmId: {}, deviceId: {}", alarm.getAlarmId(), alarm.getDeviceId());
-                continue;
+            AlarmRule rule = alarmRuleService.getById(ruleId);
+            if (rule == null || rule.getRuleStatus() == null || rule.getRuleStatus() != 1) {
+                log.info("规则不存在或已禁用: ruleId={}", ruleId);
+                return;
             }
+
+            LocalDateTime now = LocalDateTime.now();
+            LocalTime currentTime = now.toLocalTime();
 
             if (!isInPushTimeRange(currentTime, rule.getPushStartTime(), rule.getPushEndTime())) {
-                log.debug("当前时间不在推送时间范围内, ruleId: {}", rule.getRuleId());
-                continue;
+                log.debug("当前时间不在推送时间范围内: ruleId={}", ruleId);
+                return;
             }
 
-            if (!shouldPush(alarm, rule)) {
-                continue;
+            Set<Long> deviceIds = parseDeviceIds(rule.getDeviceIds(), objectMapper);
+            Set<Integer> alarmLevels = parseAlarmLevels(rule.getAlarmLevels(), objectMapper);
+
+            if (deviceIds.isEmpty()) {
+                log.warn("规则没有配置设备: ruleId={}", ruleId);
+                return;
             }
 
-            pushAlarm(alarm, rule, now);
-        }
+            LambdaQueryWrapper<DeviceAlarm> queryWrapper = new LambdaQueryWrapper<DeviceAlarm>()
+                    .in(DeviceAlarm::getDeviceId, deviceIds)
+                    .in(DeviceAlarm::getAlarmLevel, alarmLevels)
+                    .eq(DeviceAlarm::getConfirmStatus, 0)
+                    .orderByAsc(DeviceAlarm::getAlarmTime);
 
-        log.info("报警推送定时任务执行完成");
-    }
+            List<DeviceAlarm> unconfirmedAlarms = deviceAlarmService.list(queryWrapper);
+            log.info("规则 {} 查询到 {} 条未确认报警", ruleId, unconfirmedAlarms.size());
 
-    private AlarmRule findMatchingRule(DeviceAlarm alarm, List<AlarmRule> rules) {
-        if (alarm.getRuleId() != null) {
-            return rules.stream()
-                .filter(r -> r.getRuleId().equals(alarm.getRuleId()))
-                .findFirst()
-                .orElse(null);
-        }
-
-        for (AlarmRule rule : rules) {
-            Set<Long> deviceIds = parseDeviceIds(rule.getDeviceIds());
-            if (deviceIds.contains(alarm.getDeviceId())) {
-                Set<Integer> alarmLevels = parseAlarmLevels(rule.getAlarmLevels());
-                if (alarmLevels.contains(alarm.getAlarmLevel())) {
-                    return rule;
+            for (DeviceAlarm alarm : unconfirmedAlarms) {
+                if (!shouldPush(alarm, rule, alarmNoticeService)) {
+                    continue;
                 }
+                pushAlarm(alarm, rule, now, factoryDeviceService, devicePartService,
+                        alarmWebSocketHandler, alarmNoticeService, objectMapper);
             }
-        }
-        return null;
-    }
 
-    private Set<Long> parseDeviceIds(String deviceIds) {
-        if (deviceIds == null || deviceIds.isEmpty()) {
-            return Collections.emptySet();
-        }
-        try {
-            List<Long> ids = objectMapper.readValue(deviceIds, new TypeReference<List<Long>>() {});
-            return new HashSet<>(ids);
-        } catch (JsonProcessingException e) {
-            log.error("解析设备ID失败: {}", deviceIds, e);
-            return Collections.emptySet();
-        }
-    }
-
-    private Set<Integer> parseAlarmLevels(String alarmLevels) {
-        if (alarmLevels == null || alarmLevels.isEmpty()) {
-            return Set.of(1, 2, 3);
-        }
-        try {
-            List<Integer> levels = objectMapper.readValue(alarmLevels, new TypeReference<List<Integer>>() {});
-            return new HashSet<>(levels);
-        } catch (JsonProcessingException e) {
-            log.error("解析报警等级失败: {}", alarmLevels, e);
-            return Set.of(1, 2, 3);
+        } catch (Exception e) {
+            log.error("报警推送任务执行失败: ruleId={}", ruleId, e);
         }
     }
 
@@ -149,7 +99,7 @@ public class AlarmPushJob {
         return !currentTime.isBefore(startTime) && !currentTime.isAfter(endTime);
     }
 
-    private boolean shouldPush(DeviceAlarm alarm, AlarmRule rule) {
+    private boolean shouldPush(DeviceAlarm alarm, AlarmRule rule, IAlarmNoticeService alarmNoticeService) {
         Integer pushInterval = rule.getPushInterval();
         if (pushInterval == null || pushInterval <= 0) {
             pushInterval = 5;
@@ -157,11 +107,12 @@ public class AlarmPushJob {
 
         LambdaQueryWrapper<AlarmNotice> queryWrapper = new LambdaQueryWrapper<AlarmNotice>()
                 .eq(AlarmNotice::getAlarmId, alarm.getAlarmId())
+                .eq(AlarmNotice::getRuleId, rule.getRuleId())
                 .orderByDesc(AlarmNotice::getCreateTime)
                 .last("LIMIT 1");
-        
+
         AlarmNotice lastNotice = alarmNoticeService.getOne(queryWrapper);
-        
+
         if (lastNotice == null) {
             return true;
         }
@@ -170,10 +121,13 @@ public class AlarmPushJob {
         return LocalDateTime.now().isAfter(nextPushTime);
     }
 
-    private void pushAlarm(DeviceAlarm alarm, AlarmRule rule, LocalDateTime pushTime) {
-        Set<Long> targetUserIds = parseNotifyTargetIds(rule.getNotifyTargetIds());
+    private void pushAlarm(DeviceAlarm alarm, AlarmRule rule, LocalDateTime pushTime,
+                           IFactoryDeviceService factoryDeviceService, IDevicePartService devicePartService,
+                           AlarmWebSocketHandler alarmWebSocketHandler, IAlarmNoticeService alarmNoticeService,
+                           ObjectMapper objectMapper) {
+        Set<Long> targetUserIds = parseNotifyTargetIds(rule.getNotifyTargetIds(), objectMapper);
         if (targetUserIds.isEmpty()) {
-            log.warn("报警规则没有配置通知目标, ruleId: {}", rule.getRuleId());
+            log.warn("报警规则没有配置通知目标: ruleId={}", rule.getRuleId());
             return;
         }
 
@@ -185,7 +139,7 @@ public class AlarmPushJob {
         for (Long userId : targetUserIds) {
             if (alarmWebSocketHandler.isUserOnline(userId)) {
                 alarmWebSocketHandler.pushAlarmToUser(userId, pushVO);
-                saveAlarmNotice(alarm, rule, device, userId, pushTime);
+                saveAlarmNotice(alarm, rule, device, userId, pushTime, alarmNoticeService);
             }
         }
     }
@@ -232,7 +186,33 @@ public class AlarmPushJob {
         };
     }
 
-    private Set<Long> parseNotifyTargetIds(String notifyTargetIds) {
+    private Set<Long> parseDeviceIds(String deviceIds, ObjectMapper objectMapper) {
+        if (deviceIds == null || deviceIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        try {
+            List<Long> ids = objectMapper.readValue(deviceIds, new TypeReference<List<Long>>() {});
+            return new HashSet<>(ids);
+        } catch (JsonProcessingException e) {
+            log.error("解析设备ID失败: {}", deviceIds, e);
+            return Collections.emptySet();
+        }
+    }
+
+    private Set<Integer> parseAlarmLevels(String alarmLevels, ObjectMapper objectMapper) {
+        if (alarmLevels == null || alarmLevels.isEmpty()) {
+            return Set.of(1, 2, 3);
+        }
+        try {
+            List<Integer> levels = objectMapper.readValue(alarmLevels, new TypeReference<List<Integer>>() {});
+            return new HashSet<>(levels);
+        } catch (JsonProcessingException e) {
+            log.error("解析报警等级失败: {}", alarmLevels, e);
+            return Set.of(1, 2, 3);
+        }
+    }
+
+    private Set<Long> parseNotifyTargetIds(String notifyTargetIds, ObjectMapper objectMapper) {
         if (notifyTargetIds == null || notifyTargetIds.isEmpty()) {
             return Collections.emptySet();
         }
@@ -258,7 +238,8 @@ public class AlarmPushJob {
         }
     }
 
-    private void saveAlarmNotice(DeviceAlarm alarm, AlarmRule rule, FactoryDevice device, Long userId, LocalDateTime pushTime) {
+    private void saveAlarmNotice(DeviceAlarm alarm, AlarmRule rule, FactoryDevice device, Long userId,
+                                 LocalDateTime pushTime, IAlarmNoticeService alarmNoticeService) {
         AlarmNotice notice = AlarmNotice.builder()
                 .ruleId(rule.getRuleId())
                 .ruleName(rule.getRuleName())
@@ -276,7 +257,7 @@ public class AlarmPushJob {
                 .notifyTime(pushTime)
                 .readStatus(0)
                 .build();
-        
+
         alarmNoticeService.save(notice);
     }
 }

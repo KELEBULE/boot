@@ -53,8 +53,6 @@ public class FactoryAreaServiceImpl extends ServiceImpl<FactoryAreaMapper, Facto
                 .factoryId(addDTO.getFactoryId())
                 .parentId(addDTO.getParentId())
                 .areaType(addDTO.getAreaType())
-                .longitude(addDTO.getLongitude())
-                .latitude(addDTO.getLatitude())
                 .areaStatus(addDTO.getAreaStatus())
                 .areaOrder(addDTO.getAreaOrder())
                 .build();
@@ -70,8 +68,6 @@ public class FactoryAreaServiceImpl extends ServiceImpl<FactoryAreaMapper, Facto
                 .factoryId(updateDTO.getFactoryId())
                 .parentId(updateDTO.getParentId())
                 .areaType(updateDTO.getAreaType())
-                .longitude(updateDTO.getLongitude())
-                .latitude(updateDTO.getLatitude())
                 .areaStatus(updateDTO.getAreaStatus())
                 .areaOrder(updateDTO.getAreaOrder())
                 .build();

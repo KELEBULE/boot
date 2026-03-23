@@ -26,9 +26,6 @@ public class FactoryDeviceUpdateDTO implements Serializable {
     @Schema(description = "设备型号")
     private String deviceModel;
 
-    @Schema(description = "设备类型ID")
-    private Long typeId;
-
     @Schema(description = "位置ID")
     private Long locationId;
 

@@ -7,12 +7,9 @@ import com.izpan.infrastructure.page.PageQuery;
 import com.izpan.modules.alarm.domain.bo.AlarmRuleBO;
 import com.izpan.modules.alarm.domain.entity.AlarmRule;
 import com.izpan.modules.alarm.repository.mapper.AlarmRuleMapper;
-import com.izpan.modules.alarm.repository.mapper.DeviceTypeSimple;
 import com.izpan.modules.alarm.service.IAlarmRuleService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class AlarmRuleServiceImpl extends ServiceImpl<AlarmRuleMapper, AlarmRule> implements IAlarmRuleService {
@@ -24,10 +21,5 @@ public class AlarmRuleServiceImpl extends ServiceImpl<AlarmRuleMapper, AlarmRule
                 .eq(alarmRuleBO.getRuleStatus() != null, AlarmRule::getRuleStatus, alarmRuleBO.getRuleStatus())
                 .orderByDesc(AlarmRule::getRuleId);
         return baseMapper.selectPage(pageQuery.buildPage(), queryWrapper);
-    }
-
-    @Override
-    public List<DeviceTypeSimple> queryAllDeviceTypes() {
-        return baseMapper.selectAllDeviceTypes();
     }
 }

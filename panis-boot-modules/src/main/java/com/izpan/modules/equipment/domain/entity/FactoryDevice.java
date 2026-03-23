@@ -36,9 +36,6 @@ public class FactoryDevice implements Serializable {
     @JsonProperty("deviceModel")
     private String deviceModel;
 
-    @JsonProperty("typeId")
-    private Long typeId;
-
     @JsonProperty("locationId")
     private Long locationId;
 

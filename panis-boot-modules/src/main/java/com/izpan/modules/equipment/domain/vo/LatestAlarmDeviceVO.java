@@ -43,9 +43,6 @@ public class LatestAlarmDeviceVO implements Serializable {
     @Schema(description = "报警部件名称")
     private String alarmPartName;
 
-    @Schema(description = "报警部件模型节点名称")
-    private String alarmPartModelNodeName;
-
     @Schema(description = "报警级别")
     private Integer alarmLevel;
 

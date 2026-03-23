@@ -11,7 +11,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -42,12 +41,6 @@ public class FactoryArea implements Serializable {
 
     @JsonProperty("areaType")
     private Integer areaType;
-
-    @JsonProperty("longitude")
-    private BigDecimal longitude;
-
-    @JsonProperty("latitude")
-    private BigDecimal latitude;
 
     @JsonProperty("areaStatus")
     private Integer areaStatus;

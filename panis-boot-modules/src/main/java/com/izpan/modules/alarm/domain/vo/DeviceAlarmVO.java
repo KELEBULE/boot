@@ -42,9 +42,6 @@ public class DeviceAlarmVO implements Serializable {
     @Schema(description = "部件名称")
     private String partName;
 
-    @Schema(description = "监测ID")
-    private Long monitorId;
-
     @Schema(description = "规则ID")
     private Long ruleId;
 

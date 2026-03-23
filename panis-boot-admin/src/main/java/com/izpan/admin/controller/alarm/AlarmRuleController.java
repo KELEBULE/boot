@@ -22,7 +22,6 @@ import com.izpan.modules.alarm.domain.vo.AlarmRuleVO;
 import com.izpan.modules.alarm.domain.vo.DeviceTreeVO;
 import com.izpan.modules.alarm.domain.vo.OrgUserTreeVO;
 import com.izpan.modules.alarm.facade.IAlarmRuleFacade;
-import com.izpan.modules.alarm.repository.mapper.DeviceTypeSimple;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import io.swagger.v3.oas.annotations.Operation;
@@ -77,23 +76,16 @@ public class AlarmRuleController {
         return Result.status(alarmRuleFacade.batchDelete(alarmRuleDeleteDTO));
     }
 
-    @GetMapping("/device_types")
-    @SaCheckPermission("alarm:rule:deviceTypes")
-    @Operation(operationId = "6", summary = "获取所有设备类型列表")
-    public Result<List<DeviceTypeSimple>> queryAllDeviceTypes() {
-        return Result.data(alarmRuleFacade.queryAllDeviceTypes());
-    }
-
     @GetMapping("/device_tree")
     @SaCheckPermission("alarm:rule:deviceTree")
-    @Operation(operationId = "7", summary = "获取设备树形结构(工厂-厂区-设备)")
+    @Operation(operationId = "6", summary = "获取设备树形结构(工厂-厂区-设备)")
     public Result<List<DeviceTreeVO>> queryDeviceTree() {
         return Result.data(alarmRuleFacade.queryDeviceTree());
     }
 
     @GetMapping("/org_user_tree")
     @SaCheckPermission("alarm:rule:orgUserTree")
-    @Operation(operationId = "8", summary = "获取组织用户树形结构(公司-部门-用户)")
+    @Operation(operationId = "7", summary = "获取组织用户树形结构(公司-部门-用户)")
     public Result<List<OrgUserTreeVO>> queryOrgUserTree() {
         return Result.data(alarmRuleFacade.queryOrgUserTree());
     }

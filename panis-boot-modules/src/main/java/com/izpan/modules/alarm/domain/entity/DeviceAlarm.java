@@ -32,8 +32,6 @@ public class DeviceAlarm implements Serializable {
 
     private Long partId;
 
-    private Long monitorId;
-
     private Long ruleId;
 
     private Integer alarmType;
