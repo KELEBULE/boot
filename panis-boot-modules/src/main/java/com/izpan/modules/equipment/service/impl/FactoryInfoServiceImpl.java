@@ -327,3 +327,4 @@ public class FactoryInfoServiceImpl extends ServiceImpl<FactoryInfoMapper, Facto
                 .collect(Collectors.toSet());
     }
 }
+ 

@@ -31,6 +31,7 @@ import com.izpan.modules.alarm.domain.vo.FrequentAlarmTimeVO;
 import com.izpan.modules.alarm.domain.vo.TemperatureTrendVO;
 import com.izpan.modules.alarm.facade.IDeviceAlarmFacade;
 import com.izpan.modules.alarm.service.IDeviceAlarmService;
+import com.izpan.modules.alarm.service.IDeviceAlarmStatusLogService;
 import com.izpan.modules.detection.domain.entity.DeviceDetectionRecord;
 import com.izpan.modules.detection.service.IDeviceDetectionRecordService;
 import com.izpan.modules.equipment.domain.entity.DevicePart;
@@ -56,6 +57,7 @@ public class DeviceAlarmFacadeImpl implements IDeviceAlarmFacade {
     private final ISysUserService sysUserService;
     private final IWorkOrderService workOrderService;
     private final IDeviceDetectionRecordService deviceDetectionRecordService;
+    private final IDeviceAlarmStatusLogService deviceAlarmStatusLogService;
 
     public DeviceAlarmFacadeImpl(
             IDeviceAlarmService deviceAlarmService,
@@ -63,13 +65,15 @@ public class DeviceAlarmFacadeImpl implements IDeviceAlarmFacade {
             IDevicePartService devicePartService,
             @Lazy ISysUserService sysUserService,
             IWorkOrderService workOrderService,
-            IDeviceDetectionRecordService deviceDetectionRecordService) {
+            IDeviceDetectionRecordService deviceDetectionRecordService,
+            IDeviceAlarmStatusLogService deviceAlarmStatusLogService) {
         this.deviceAlarmService = deviceAlarmService;
         this.factoryDeviceService = factoryDeviceService;
         this.devicePartService = devicePartService;
         this.sysUserService = sysUserService;
         this.workOrderService = workOrderService;
         this.deviceDetectionRecordService = deviceDetectionRecordService;
+        this.deviceAlarmStatusLogService = deviceAlarmStatusLogService;
     }
 
     @Override
@@ -140,6 +144,11 @@ public class DeviceAlarmFacadeImpl implements IDeviceAlarmFacade {
     @Transactional
     public boolean confirm(DeviceAlarmConfirmDTO deviceAlarmConfirmDTO) {
         Long currentUserId = StpUtil.getLoginIdAsLong();
+        SysUser currentUser = sysUserService.getById(currentUserId);
+        String currentUserName = currentUser != null 
+                ? (currentUser.getRealName() != null ? currentUser.getRealName() : currentUser.getUserName()) 
+                : null;
+        
         DeviceAlarm deviceAlarm = deviceAlarmService.getById(deviceAlarmConfirmDTO.getAlarmId());
         if (deviceAlarm == null) {
             return false;
@@ -147,6 +156,10 @@ public class DeviceAlarmFacadeImpl implements IDeviceAlarmFacade {
 
         Integer isFalseAlarm = deviceAlarmConfirmDTO.getIsFalseAlarm() != null
                 ? deviceAlarmConfirmDTO.getIsFalseAlarm() : 0;
+
+        Integer beforeStatus = deviceAlarm.getConfirmStatus() != null ? deviceAlarm.getConfirmStatus() : 0;
+        Integer afterStatus = 1;
+        Integer operateType = isFalseAlarm == 1 ? 4 : 1;
 
         LambdaUpdateWrapper<DeviceAlarm> updateWrapper = new LambdaUpdateWrapper<DeviceAlarm>()
                 .eq(DeviceAlarm::getAlarmId, deviceAlarmConfirmDTO.getAlarmId())
@@ -157,11 +170,25 @@ public class DeviceAlarmFacadeImpl implements IDeviceAlarmFacade {
 
         boolean updated = deviceAlarmService.update(updateWrapper);
 
-        if (updated && isFalseAlarm == 1) {
-            LambdaUpdateWrapper<DeviceDetectionRecord> recordUpdateWrapper = new LambdaUpdateWrapper<DeviceDetectionRecord>()
-                    .eq(DeviceDetectionRecord::getAlarmId, deviceAlarmConfirmDTO.getAlarmId())
-                    .set(DeviceDetectionRecord::getIsFalseAlarm, 1);
-            deviceDetectionRecordService.update(recordUpdateWrapper);
+        if (updated) {
+            deviceAlarmStatusLogService.saveLog(
+                    deviceAlarm.getAlarmId(),
+                    deviceAlarm.getAlarmCode(),
+                    beforeStatus,
+                    afterStatus,
+                    operateType,
+                    currentUserId,
+                    currentUserName,
+                    1,
+                    isFalseAlarm == 1 ? "标记为误报" : "确认报警"
+            );
+            
+            if (isFalseAlarm == 1) {
+                LambdaUpdateWrapper<DeviceDetectionRecord> recordUpdateWrapper = new LambdaUpdateWrapper<DeviceDetectionRecord>()
+                        .eq(DeviceDetectionRecord::getAlarmId, deviceAlarmConfirmDTO.getAlarmId())
+                        .set(DeviceDetectionRecord::getIsFalseAlarm, 1);
+                deviceDetectionRecordService.update(recordUpdateWrapper);
+            }
         }
 
         return updated;
@@ -171,6 +198,11 @@ public class DeviceAlarmFacadeImpl implements IDeviceAlarmFacade {
     @Transactional
     public boolean createWorkOrder(DeviceAlarmCreateWorkOrderDTO deviceAlarmCreateWorkOrderDTO) {
         Long currentUserId = StpUtil.getLoginIdAsLong();
+        SysUser currentUser = sysUserService.getById(currentUserId);
+        String currentUserName = currentUser != null 
+                ? (currentUser.getRealName() != null ? currentUser.getRealName() : currentUser.getUserName()) 
+                : null;
+        
         DeviceAlarm deviceAlarm = deviceAlarmService.getById(deviceAlarmCreateWorkOrderDTO.getAlarmId());
         if (deviceAlarm == null) {
             return false;
@@ -215,6 +247,18 @@ public class DeviceAlarmFacadeImpl implements IDeviceAlarmFacade {
                     .set(DeviceAlarm::getWorkOrderId, workOrder.getOrderId())
                     .set(DeviceAlarm::getIsFalseAlarm, 0);
             deviceAlarmService.update(updateWrapper);
+            
+            deviceAlarmStatusLogService.saveLog(
+                    deviceAlarm.getAlarmId(),
+                    deviceAlarm.getAlarmCode(),
+                    1,
+                    2,
+                    2,
+                    currentUserId,
+                    currentUserName,
+                    1,
+                    "创建工单：" + orderCode
+            );
         }
 
         return saved;

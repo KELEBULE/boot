@@ -22,12 +22,14 @@ import com.izpan.modules.alarm.domain.vo.AlarmLevelDistributionVO;
 import com.izpan.modules.alarm.domain.vo.DailyAlarmTrendVO;
 import com.izpan.modules.alarm.domain.vo.DeviceAlarmExportVO;
 import com.izpan.modules.alarm.domain.vo.DeviceAlarmLevelStatsVO;
+import com.izpan.modules.alarm.domain.vo.DeviceAlarmStatusLogVO;
 import com.izpan.modules.alarm.domain.vo.DeviceAlarmTopVO;
 import com.izpan.modules.alarm.domain.vo.DeviceAlarmVO;
 import com.izpan.modules.alarm.domain.vo.FrequentAlarmPartVO;
 import com.izpan.modules.alarm.domain.vo.FrequentAlarmTimeVO;
 import com.izpan.modules.alarm.domain.vo.TemperatureTrendVO;
 import com.izpan.modules.alarm.facade.IDeviceAlarmFacade;
+import com.izpan.modules.alarm.facade.IDeviceAlarmStatusLogFacade;
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
 import cn.idev.excel.EasyExcel;
@@ -48,6 +50,9 @@ public class DeviceAlarmController {
 
     @NonNull
     private IDeviceAlarmFacade deviceAlarmFacade;
+
+    @NonNull
+    private IDeviceAlarmStatusLogFacade deviceAlarmStatusLogFacade;
 
     @GetMapping("/page")
     @SaCheckPermission("alarm:device:page")
@@ -187,5 +192,12 @@ public class DeviceAlarmController {
             @Parameter(description = "开始时间") @RequestParam String startTime,
             @Parameter(description = "结束时间") @RequestParam String endTime) {
         return Result.data(deviceAlarmFacade.getPartAlarmLevelDistribution(partId, startTime, endTime));
+    }
+
+    @GetMapping("/status_log/{alarmId}")
+    @Operation(operationId = "17", summary = "获取报警状态变更日志列表")
+    public Result<List<DeviceAlarmStatusLogVO>> getStatusLogList(
+            @Parameter(description = "报警ID") @PathVariable("alarmId") Long alarmId) {
+        return Result.data(deviceAlarmStatusLogFacade.listByAlarmId(alarmId));
     }
 }
