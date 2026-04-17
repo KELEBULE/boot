@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import com.izpan.infrastructure.holder.GlobalUserHolder;
 import com.izpan.modules.ai.tools.domain.AiToolResult;
 import com.izpan.modules.ai.tools.executor.IAiToolExecutor;
+import com.izpan.modules.ai.tools.util.AiToolPermissionChecker;
 import com.izpan.modules.workorder.domain.vo.WorkOrderStatisticsVO;
 import com.izpan.modules.workorder.service.IWorkOrderService;
 
@@ -19,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class GetWorkOrderStatisticsExecutor implements IAiToolExecutor {
 
+    private static final String REQUIRED_PERMISSION = "device:work:order:page";
+
     private final IWorkOrderService workOrderService;
 
     @Override
@@ -29,6 +32,11 @@ public class GetWorkOrderStatisticsExecutor implements IAiToolExecutor {
     @Override
     public AiToolResult execute(Map<String, Object> arguments) {
         long startTime = System.currentTimeMillis();
+        
+        if (!AiToolPermissionChecker.hasPermission(REQUIRED_PERMISSION)) {
+            return AiToolResult.failure(getToolName(), AiToolPermissionChecker.getPermissionDeniedMessage(REQUIRED_PERMISSION));
+        }
+        
         try {
             String timeRange = arguments.containsKey("timeRange") 
                     ? (String) arguments.get("timeRange") : "month";

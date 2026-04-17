@@ -162,6 +162,50 @@ public class AiToolRegistry {
                                 .build())
                         .build())
                 .build());
+
+        registerTool(AiToolDefinition.builder()
+                .type("function")
+                .function(AiToolDefinition.FunctionDefinition.builder()
+                        .name("get_alarm_detail")
+                        .description("根据报警编号查询报警详情。当用户询问'查询报警ALMxxx'、'报警编号xxx的详情'、'查询某个报警信息'时使用此工具。报警编号格式通常为ALM+年月日+时分秒+序号，如ALM20260301175604000088。")
+                        .parameters(AiToolDefinition.ParametersDefinition.builder()
+                                .type("object")
+                                .properties(Map.of(
+                                        "alarmCode", AiToolDefinition.PropertyDefinition.builder()
+                                                .type("string")
+                                                .description("报警编号，如ALM20260301175604000088。用户提供的报警号通常就是这个编号。")
+                                                .build()
+                                ))
+                                .required(List.of("alarmCode"))
+                                .build())
+                        .build())
+                .build());
+
+        registerTool(AiToolDefinition.builder()
+                .type("function")
+                .function(AiToolDefinition.FunctionDefinition.builder()
+                        .name("query_device_alarms")
+                        .description("查询指定设备的报警记录。当用户询问'某设备的报警'、'设备xxx有哪些报警'时使用此工具。")
+                        .parameters(AiToolDefinition.ParametersDefinition.builder()
+                                .type("object")
+                                .properties(Map.of(
+                                        "deviceId", AiToolDefinition.PropertyDefinition.builder()
+                                                .type("integer")
+                                                .description("设备ID")
+                                                .build(),
+                                        "startTime", AiToolDefinition.PropertyDefinition.builder()
+                                                .type("string")
+                                                .description("开始时间，格式：YYYY-MM-DD")
+                                                .build(),
+                                        "endTime", AiToolDefinition.PropertyDefinition.builder()
+                                                .type("string")
+                                                .description("结束时间，格式：YYYY-MM-DD")
+                                                .build()
+                                ))
+                                .required(List.of("deviceId"))
+                                .build())
+                        .build())
+                .build());
     }
 
     private void registerDeviceTools() {

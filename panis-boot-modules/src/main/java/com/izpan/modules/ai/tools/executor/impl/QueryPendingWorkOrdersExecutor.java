@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.izpan.modules.ai.tools.domain.AiToolResult;
 import com.izpan.modules.ai.tools.executor.IAiToolExecutor;
+import com.izpan.modules.ai.tools.util.AiToolPermissionChecker;
 import com.izpan.modules.workorder.domain.entity.WorkOrder;
 import com.izpan.modules.workorder.repository.mapper.WorkOrderMapper;
 
@@ -21,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class QueryPendingWorkOrdersExecutor implements IAiToolExecutor {
 
+    private static final String REQUIRED_PERMISSION = "device:work:order:page";
+
     private final WorkOrderMapper workOrderMapper;
 
     @Override
@@ -31,6 +34,11 @@ public class QueryPendingWorkOrdersExecutor implements IAiToolExecutor {
     @Override
     public AiToolResult execute(Map<String, Object> arguments) {
         long startTime = System.currentTimeMillis();
+        
+        if (!AiToolPermissionChecker.hasPermission(REQUIRED_PERMISSION)) {
+            return AiToolResult.failure(getToolName(), AiToolPermissionChecker.getPermissionDeniedMessage(REQUIRED_PERMISSION));
+        }
+        
         try {
             int limit = arguments.containsKey("limit") 
                     ? ((Number) arguments.get("limit")).intValue() : 20;

@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.izpan.modules.ai.tools.domain.AiToolResult;
 import com.izpan.modules.ai.tools.executor.IAiToolExecutor;
+import com.izpan.modules.ai.tools.util.AiToolPermissionChecker;
 import com.izpan.modules.alarm.domain.entity.DeviceAlarm;
 import com.izpan.modules.alarm.repository.mapper.DeviceAlarmMapper;
 
@@ -22,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class QueryDeviceAlarmsExecutor implements IAiToolExecutor {
+
+    private static final String REQUIRED_PERMISSION = "data:alarm:page";
 
     private final DeviceAlarmMapper deviceAlarmMapper;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -35,6 +38,11 @@ public class QueryDeviceAlarmsExecutor implements IAiToolExecutor {
     @Override
     public AiToolResult execute(Map<String, Object> arguments) {
         long startTime = System.currentTimeMillis();
+        
+        if (!AiToolPermissionChecker.hasPermission(REQUIRED_PERMISSION)) {
+            return AiToolResult.failure(getToolName(), AiToolPermissionChecker.getPermissionDeniedMessage(REQUIRED_PERMISSION));
+        }
+        
         try {
             Long deviceId = ((Number) arguments.get("deviceId")).longValue();
             String startTimeStr = (String) arguments.get("startTime");

@@ -39,12 +39,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.izpan.infrastructure.holder.GlobalUserHolder;
 import com.izpan.modules.ai.client.OllamaClient;
 import com.izpan.modules.ai.domain.dto.chat.AiChatRequestDTO;
-import com.izpan.modules.ai.domain.dto.chat.AiChatResponseDTO;
 import com.izpan.modules.ai.domain.entity.AiChatHistory;
 import com.izpan.modules.ai.domain.entity.AiChatSession;
 import com.izpan.modules.ai.repository.mapper.AiChatHistoryMapper;
 import com.izpan.modules.ai.repository.mapper.AiChatSessionMapper;
 import com.izpan.modules.ai.service.IAiChatService;
+import com.izpan.modules.ai.service.IAiConfigService;
 import com.izpan.modules.ai.tools.domain.AiToolDefinition;
 import com.izpan.modules.ai.tools.domain.AiToolResult;
 import com.izpan.modules.ai.tools.executor.AiToolExecutorDispatcher;
@@ -87,6 +87,9 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
     @Autowired
     private AiToolExecutorDispatcher executorDispatcher;
 
+    @Autowired
+    private IAiConfigService aiConfigService;
+
     private final Map<String, List<Map<String, String>>> sessionHistoryCache = new ConcurrentHashMap<>();
 
     @PostConstruct
@@ -101,117 +104,6 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
         String lowerModel = model.toLowerCase();
         return TOOL_SUPPORTED_MODELS.stream()
                 .anyMatch(supported -> lowerModel.contains(supported.toLowerCase()) || supported.toLowerCase().contains(lowerModel));
-    }
-
-    @Override
-    public AiChatResponseDTO chatCompletion(AiChatRequestDTO request) {
-        long startTime = System.currentTimeMillis();
-
-        final String sessionId = request.getSessionId();
-        final String actualSessionId = (sessionId == null || sessionId.isEmpty()) ? generateSessionId() : sessionId;
-
-        List<Map<String, Object>> messages = buildMessagesWithHistory(actualSessionId, request.getMessage());
-
-        String reply;
-        List<Map<String, Object>> toolResults = new ArrayList<>();
-        boolean useTools = isToolSupported(request.getModel());
-
-        if (useTools) {
-            List<Map<String, Object>> tools = buildToolsDefinition();
-
-            Map<String, Object> response = ollamaClient.chat(
-                    request.getModel(),
-                    messages,
-                    tools,
-                    request.getTemperature(),
-                    request.getMaxTokens(),
-                    false
-            );
-
-            List<Map<String, Object>> toolCalls = ollamaClient.extractToolCalls(response);
-
-            if (!toolCalls.isEmpty()) {
-                log.info("检测到工具调用，数量: {}", toolCalls.size());
-
-                for (Map<String, Object> toolCall : toolCalls) {
-                    Map<String, Object> function = (Map<String, Object>) toolCall.get("function");
-                    String toolName = (String) function.get("name");
-                    Map<String, Object> arguments = (Map<String, Object>) function.get("arguments");
-
-                    AiToolResult result = executorDispatcher.execute(toolName, arguments);
-
-                    Map<String, Object> toolResultMap = new HashMap<>();
-                    toolResultMap.put("toolName", toolName);
-                    toolResultMap.put("success", result.isSuccess());
-                    toolResultMap.put("data", result.getData() != null ? result.getData() : result.getErrorMessage());
-                    toolResults.add(toolResultMap);
-
-                    log.info("工具 {} 执行完成，耗时: {}ms", toolName, result.getExecutionTime());
-                }
-
-                messages.add(Map.of("role", "assistant", "content", ""));
-                for (Map<String, Object> toolCall : toolCalls) {
-                    Map<String, Object> function = (Map<String, Object>) toolCall.get("function");
-                    try {
-                        messages.add(Map.of(
-                                "role", "tool",
-                                "content", objectMapper.writeValueAsString(
-                                        toolResults.stream()
-                                                .filter(r -> r.get("toolName").equals(function.get("name")))
-                                                .findFirst()
-                                                .orElse(Map.of())
-                                )
-                        ));
-                    } catch (JsonProcessingException e) {
-                        log.error("序列化工具结果失败", e);
-                        messages.add(Map.of("role", "tool", "content", "{}"));
-                    }
-                }
-
-                Map<String, Object> finalResponse = ollamaClient.chat(
-                        request.getModel(),
-                        messages,
-                        null,
-                        request.getTemperature(),
-                        request.getMaxTokens() * 2,
-                        false
-                );
-                reply = ollamaClient.extractContent(finalResponse);
-            } else {
-                reply = ollamaClient.extractContent(response);
-            }
-        } else {
-            log.info("模型 {} 不支持工具调用，使用普通对话模式", request.getModel());
-            String prompt = buildPromptWithToolContext(request.getMessage());
-            Map<String, Object> response = ollamaClient.generate(
-                    request.getModel(),
-                    prompt,
-                    request.getTemperature(),
-                    request.getMaxTokens(),
-                    false
-            );
-
-            if (response.containsKey("error")) {
-                reply = "抱歉，AI服务暂时不可用，请稍后再试。";
-            } else {
-                reply = (String) response.get("response");
-            }
-        }
-
-        Long processingTime = System.currentTimeMillis() - startTime;
-
-        saveChatHistory(actualSessionId, "user", request.getMessage(), null, null);
-        saveChatHistory(actualSessionId, "assistant", reply, null, processingTime);
-        updateSessionLastActiveTime(actualSessionId, GlobalUserHolder.getUserId(), request.getModel(), request.getMessage());
-
-        return AiChatResponseDTO.builder()
-                .reply(reply)
-                .model(request.getModel())
-                .processingTime(processingTime)
-                .timestamp(LocalDateTime.now())
-                .sessionId(actualSessionId)
-                .toolResults(toolResults.isEmpty() ? null : toolResults)
-                .build();
     }
 
     @Override
@@ -478,6 +370,10 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
     }
 
     private String buildSystemPrompt() {
+        String configPrompt = aiConfigService.getSystemPrompt();
+        if (configPrompt != null && !configPrompt.isEmpty()) {
+            return configPrompt;
+        }
         return """
                 你是一个专业的设备管理AI助手，帮助用户查询和分析设备报警数据。
                 

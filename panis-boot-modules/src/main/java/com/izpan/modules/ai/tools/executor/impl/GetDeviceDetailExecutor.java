@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import com.izpan.modules.ai.tools.domain.AiToolResult;
 import com.izpan.modules.ai.tools.executor.IAiToolExecutor;
+import com.izpan.modules.ai.tools.util.AiToolPermissionChecker;
 import com.izpan.modules.equipment.domain.entity.FactoryDevice;
 import com.izpan.modules.equipment.service.IFactoryDeviceService;
 
@@ -18,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class GetDeviceDetailExecutor implements IAiToolExecutor {
 
+    private static final String REQUIRED_PERMISSION = "equipment:device:get";
+
     private final IFactoryDeviceService deviceService;
 
     @Override
@@ -28,6 +31,11 @@ public class GetDeviceDetailExecutor implements IAiToolExecutor {
     @Override
     public AiToolResult execute(Map<String, Object> arguments) {
         long startTime = System.currentTimeMillis();
+        
+        if (!AiToolPermissionChecker.hasPermission(REQUIRED_PERMISSION)) {
+            return AiToolResult.failure(getToolName(), AiToolPermissionChecker.getPermissionDeniedMessage(REQUIRED_PERMISSION));
+        }
+        
         try {
             Object deviceIdObj = arguments.get("deviceId");
             Long deviceId;

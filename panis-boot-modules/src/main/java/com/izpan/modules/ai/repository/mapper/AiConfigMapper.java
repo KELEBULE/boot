@@ -4,7 +4,7 @@
  * For educational purposes only, commercial use shall comply with the author's copyright information.
  * The author does not guarantee or assume any responsibility for the risks of using software.
  *
- * Licensed under the Apache License, Version 2.0 (the "License").
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -16,34 +16,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.izpan.modules.ai.service;
+package com.izpan.modules.ai.repository.mapper;
 
-import java.util.List;
-
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import com.izpan.modules.ai.domain.dto.chat.AiChatRequestDTO;
-import com.izpan.modules.ai.domain.dto.chat.AiChatResponseDTO;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.izpan.modules.ai.domain.entity.AiConfig;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
- * AI聊天 Service 服务接口层
+ * AI配置 Mapper 接口
  *
  * @Author payne.zhuang <paynezhuang@gmail.com>
  * @ProjectName panis-boot
- * @ClassName com.izpan.modules.ai.service.IAiChatService
+ * @ClassName com.izpan.modules.ai.repository.mapper.AiConfigMapper
  * @CreateTime 2024-12-20
  */
-public interface IAiChatService {
-
-    SseEmitter streamChat(AiChatRequestDTO request);
-
-    List<String> getAvailableModels();
-
-    void saveChatHistory(String sessionId, String role, String content, Integer tokensUsed, Long processingTime);
-
-    void updateSessionLastActiveTime(String sessionId, Long userId, String model);
-
-    void updateSessionLastActiveTime(String sessionId, Long userId, String model, String title);
-
-    void clearSessionHistory(String sessionId);
+@Mapper
+public interface AiConfigMapper extends BaseMapper<AiConfig> {
 }

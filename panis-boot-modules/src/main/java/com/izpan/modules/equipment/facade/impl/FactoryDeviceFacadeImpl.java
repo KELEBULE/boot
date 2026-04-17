@@ -29,6 +29,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -171,6 +173,8 @@ public class FactoryDeviceFacadeImpl implements IFactoryDeviceFacade {
                 .eq(com.izpan.modules.workorder.domain.entity.WorkOrder::getDeviceId, deviceId)
                 .in(com.izpan.modules.workorder.domain.entity.WorkOrder::getOrderStatus, 0, 1, 2)
                 .count();
+
+        int totalWorkHours = calculateTotalWorkHours(device);
         
         return DeviceDetailStatsVO.builder()
                 .deviceId(device.getDeviceId())
@@ -180,8 +184,19 @@ public class FactoryDeviceFacadeImpl implements IFactoryDeviceFacade {
                 .imageUrl(device.getImageUrl())
                 .alarmCount(alarmCount)
                 .workOrderCount(workOrderCount)
-                .totalWorkHours(device.getTotalWorkHours())
+                .totalWorkHours(totalWorkHours)
                 .build();
+    }
+
+    private int calculateTotalWorkHours(FactoryDevice device) {
+        int baseHours = device.getTotalWorkHours() != null ? device.getTotalWorkHours() : 0;
+        
+        if (device.getDeviceStatus() == 1 && device.getLastOnlineTime() != null) {
+            long currentSessionHours = ChronoUnit.HOURS.between(device.getLastOnlineTime(), LocalDateTime.now());
+            return baseHours + (int) currentSessionHours;
+        }
+        
+        return baseHours;
     }
 
     @Override

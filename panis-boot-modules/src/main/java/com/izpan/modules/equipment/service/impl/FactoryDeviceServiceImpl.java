@@ -1,6 +1,7 @@
 package com.izpan.modules.equipment.service.impl;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,13 +173,32 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
             return false;
         }
 
-        LambdaUpdateWrapper<FactoryDevice> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.in(FactoryDevice::getDeviceId, ids)
-                .set(FactoryDevice::getDeviceStatus, 0)
-                .set(FactoryDevice::getScrapStatus, 1)
-                .set(FactoryDevice::getScrapTime, LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
 
-        return update(updateWrapper);
+        for (Long deviceId : ids) {
+            FactoryDevice device = this.getById(deviceId);
+            if (device == null) {
+                continue;
+            }
+
+            LambdaUpdateWrapper<FactoryDevice> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(FactoryDevice::getDeviceId, deviceId);
+
+            if (device.getDeviceStatus() == 1 && device.getLastOnlineTime() != null) {
+                long hoursWorked = ChronoUnit.HOURS.between(device.getLastOnlineTime(), now);
+                int currentTotalHours = device.getTotalWorkHours() != null ? device.getTotalWorkHours() : 0;
+                updateWrapper.set(FactoryDevice::getTotalWorkHours, currentTotalHours + (int) hoursWorked);
+            }
+
+            updateWrapper.set(FactoryDevice::getDeviceStatus, 0)
+                    .set(FactoryDevice::getScrapStatus, 1)
+                    .set(FactoryDevice::getScrapTime, now)
+                    .set(FactoryDevice::getLastOnlineTime, (LocalDateTime) null);
+
+            this.update(updateWrapper);
+        }
+
+        return true;
     }
 
     @Override
@@ -188,10 +208,43 @@ public class FactoryDeviceServiceImpl extends ServiceImpl<FactoryDeviceMapper, F
             return false;
         }
 
-        LambdaUpdateWrapper<FactoryDevice> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.in(FactoryDevice::getDeviceId, batchStatusDTO.getIds())
-                .set(FactoryDevice::getDeviceStatus, batchStatusDTO.getDeviceStatus());
+        LocalDateTime now = LocalDateTime.now();
+        Integer targetStatus = batchStatusDTO.getDeviceStatus();
 
-        return update(updateWrapper);
+        for (Long deviceId : batchStatusDTO.getIds()) {
+            FactoryDevice device = this.getById(deviceId);
+            if (device == null) {
+                continue;
+            }
+
+            Integer fromStatus = device.getDeviceStatus();
+            LambdaUpdateWrapper<FactoryDevice> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.eq(FactoryDevice::getDeviceId, deviceId);
+
+            if (fromStatus == 1 && targetStatus != 1) {
+                if (device.getLastOnlineTime() != null) {
+                    long hoursWorked = ChronoUnit.HOURS.between(device.getLastOnlineTime(), now);
+                    int currentTotalHours = device.getTotalWorkHours() != null ? device.getTotalWorkHours() : 0;
+                    updateWrapper.set(FactoryDevice::getTotalWorkHours, currentTotalHours + (int) hoursWorked);
+                }
+                updateWrapper.set(FactoryDevice::getLastOnlineTime, (LocalDateTime) null);
+            }
+
+            if (targetStatus == 1) {
+                updateWrapper.set(FactoryDevice::getLastOnlineTime, now);
+            }
+
+            if (targetStatus == 0) {
+                updateWrapper.set(FactoryDevice::getScrapStatus, 1);
+                updateWrapper.set(FactoryDevice::getScrapTime, now);
+            } else {
+                updateWrapper.set(FactoryDevice::getScrapStatus, 0);
+            }
+
+            updateWrapper.set(FactoryDevice::getDeviceStatus, targetStatus);
+            this.update(updateWrapper);
+        }
+
+        return true;
     }
 }

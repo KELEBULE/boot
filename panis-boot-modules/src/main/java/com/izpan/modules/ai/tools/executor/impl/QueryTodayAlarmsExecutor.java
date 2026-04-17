@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.izpan.modules.ai.tools.domain.AiToolResult;
 import com.izpan.modules.ai.tools.executor.IAiToolExecutor;
+import com.izpan.modules.ai.tools.util.AiToolPermissionChecker;
 import com.izpan.modules.alarm.domain.entity.DeviceAlarm;
 import com.izpan.modules.alarm.repository.mapper.DeviceAlarmMapper;
 
@@ -25,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class QueryTodayAlarmsExecutor implements IAiToolExecutor {
 
+    private static final String REQUIRED_PERMISSION = "data:alarm:page";
+
     private final DeviceAlarmMapper deviceAlarmMapper;
 
     @Override
@@ -35,6 +38,11 @@ public class QueryTodayAlarmsExecutor implements IAiToolExecutor {
     @Override
     public AiToolResult execute(Map<String, Object> arguments) {
         long startTime = System.currentTimeMillis();
+        
+        if (!AiToolPermissionChecker.hasPermission(REQUIRED_PERMISSION)) {
+            return AiToolResult.failure(getToolName(), AiToolPermissionChecker.getPermissionDeniedMessage(REQUIRED_PERMISSION));
+        }
+        
         try {
             LocalDateTime todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
             LocalDateTime todayEnd = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);

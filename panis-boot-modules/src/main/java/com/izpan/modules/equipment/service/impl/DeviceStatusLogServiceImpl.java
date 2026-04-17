@@ -1,6 +1,7 @@
 package com.izpan.modules.equipment.service.impl;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -101,8 +102,29 @@ public class DeviceStatusLogServiceImpl extends ServiceImpl<DeviceStatusLogMappe
             Integer toStatus = statusChangeDTO.getTargetStatus();
 
             LambdaUpdateWrapper<FactoryDevice> updateWrapper = new LambdaUpdateWrapper<>();
-            updateWrapper.eq(FactoryDevice::getDeviceId, deviceId)
-                    .set(FactoryDevice::getDeviceStatus, toStatus);
+            updateWrapper.eq(FactoryDevice::getDeviceId, deviceId);
+
+            if (fromStatus == 1 && toStatus != 1) {
+                if (device.getLastOnlineTime() != null) {
+                    long hoursWorked = ChronoUnit.HOURS.between(device.getLastOnlineTime(), now);
+                    int currentTotalHours = device.getTotalWorkHours() != null ? device.getTotalWorkHours() : 0;
+                    updateWrapper.set(FactoryDevice::getTotalWorkHours, currentTotalHours + (int) hoursWorked);
+                }
+                updateWrapper.set(FactoryDevice::getLastOnlineTime, (LocalDateTime) null);
+            }
+
+            if (toStatus == 1) {
+                updateWrapper.set(FactoryDevice::getLastOnlineTime, now);
+            }
+
+            if (toStatus == 0) {
+                updateWrapper.set(FactoryDevice::getScrapStatus, 1);
+                updateWrapper.set(FactoryDevice::getScrapTime, now);
+            } else {
+                updateWrapper.set(FactoryDevice::getScrapStatus, 0);
+            }
+
+            updateWrapper.set(FactoryDevice::getDeviceStatus, toStatus);
             factoryDeviceService.update(updateWrapper);
 
             DeviceStatusLog statusLog = DeviceStatusLog.builder()
@@ -163,10 +185,18 @@ public class DeviceStatusLogServiceImpl extends ServiceImpl<DeviceStatusLogMappe
             Integer fromStatus = device.getDeviceStatus();
 
             LambdaUpdateWrapper<FactoryDevice> updateWrapper = new LambdaUpdateWrapper<>();
-            updateWrapper.eq(FactoryDevice::getDeviceId, deviceId)
-                    .set(FactoryDevice::getDeviceStatus, 0)
+            updateWrapper.eq(FactoryDevice::getDeviceId, deviceId);
+
+            if (fromStatus == 1 && device.getLastOnlineTime() != null) {
+                long hoursWorked = ChronoUnit.HOURS.between(device.getLastOnlineTime(), now);
+                int currentTotalHours = device.getTotalWorkHours() != null ? device.getTotalWorkHours() : 0;
+                updateWrapper.set(FactoryDevice::getTotalWorkHours, currentTotalHours + (int) hoursWorked);
+            }
+
+            updateWrapper.set(FactoryDevice::getDeviceStatus, 0)
                     .set(FactoryDevice::getScrapStatus, 1)
-                    .set(FactoryDevice::getScrapTime, now);
+                    .set(FactoryDevice::getScrapTime, now)
+                    .set(FactoryDevice::getLastOnlineTime, (LocalDateTime) null);
             factoryDeviceService.update(updateWrapper);
 
             DeviceStatusLog statusLog = DeviceStatusLog.builder()

@@ -1,21 +1,35 @@
 package com.izpan.admin.controller.system;
 
-import cn.dev33.satoken.annotation.SaCheckPermission;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.izpan.common.api.Result;
 import com.izpan.infrastructure.annotation.RepeatSubmit;
 import com.izpan.infrastructure.page.PageQuery;
 import com.izpan.infrastructure.page.RPage;
-import com.izpan.modules.system.domain.dto.user.*;
+import com.izpan.modules.system.domain.dto.user.SysUserAddDTO;
+import com.izpan.modules.system.domain.dto.user.SysUserDeleteDTO;
+import com.izpan.modules.system.domain.dto.user.SysUserResponsibilitiesUpdateDTO;
+import com.izpan.modules.system.domain.dto.user.SysUserSearchDTO;
+import com.izpan.modules.system.domain.dto.user.SysUserUpdateDTO;
 import com.izpan.modules.system.domain.vo.SysUserResponsibilitiesVO;
 import com.izpan.modules.system.domain.vo.SysUserVO;
 import com.izpan.modules.system.facade.ISysUserFacade;
+
+import cn.dev33.satoken.annotation.SaCheckPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
 
 /**
  * 系统管理 - 用户管理 Controller 控制层
@@ -45,7 +59,6 @@ public class SysUserController {
     }
 
     @GetMapping("/{id}")
-    @SaCheckPermission("sys:user:get")
     @Operation(operationId = "2", summary = "根据ID获取用户详细信息")
     public Result<SysUserVO> get(@Parameter(description = "ID") @PathVariable("id") Long id) {
         return Result.data(sysUserFacade.get(id));

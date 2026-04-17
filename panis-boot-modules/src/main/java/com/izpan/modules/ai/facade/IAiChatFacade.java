@@ -39,8 +39,6 @@ import com.izpan.modules.ai.domain.vo.AiSessionVO;
  */
 public interface IAiChatFacade {
 
-    AiChatResponseDTO chatCompletion(AiChatRequestDTO request);
-
     SseEmitter streamChat(AiChatRequestDTO request);
 
     List<AiChatVO> getSessionHistory(String sessionId);

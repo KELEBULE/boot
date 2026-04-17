@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.izpan.modules.ai.tools.domain.AiToolResult;
 import com.izpan.modules.ai.tools.executor.IAiToolExecutor;
+import com.izpan.modules.ai.tools.util.AiToolPermissionChecker;
 import com.izpan.modules.monitor.domain.entity.MonLogsLogin;
 import com.izpan.modules.monitor.repository.mapper.MonLogsLoginMapper;
 
@@ -21,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class QueryLoginLogsExecutor implements IAiToolExecutor {
+
+    private static final String REQUIRED_PERMISSION = "monitor:logs:login:page";
 
     private final MonLogsLoginMapper loginLogMapper;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -33,6 +36,11 @@ public class QueryLoginLogsExecutor implements IAiToolExecutor {
     @Override
     public AiToolResult execute(Map<String, Object> arguments) {
         long startTime = System.currentTimeMillis();
+        
+        if (!AiToolPermissionChecker.hasPermission(REQUIRED_PERMISSION)) {
+            return AiToolResult.failure(getToolName(), AiToolPermissionChecker.getPermissionDeniedMessage(REQUIRED_PERMISSION));
+        }
+        
         try {
             int limit = arguments.containsKey("limit") 
                     ? ((Number) arguments.get("limit")).intValue() : 20;

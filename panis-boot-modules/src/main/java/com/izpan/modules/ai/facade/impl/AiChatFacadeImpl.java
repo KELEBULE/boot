@@ -73,11 +73,6 @@ public class AiChatFacadeImpl implements IAiChatFacade {
     private AiFileUploadMapper fileUploadMapper;
 
     @Override
-    public AiChatResponseDTO chatCompletion(AiChatRequestDTO request) {
-        return aiChatService.chatCompletion(request);
-    }
-
-    @Override
     public SseEmitter streamChat(AiChatRequestDTO request) {
         return aiChatService.streamChat(request);
     }

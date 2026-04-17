@@ -4,7 +4,7 @@
  * For educational purposes only, commercial use shall comply with the author's copyright information.
  * The author does not guarantee or assume any responsibility for the risks of using software.
  *
- * Licensed under the Apache License, Version 2.0 (the "License").
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -16,34 +16,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.izpan.modules.ai.service;
+package com.izpan.modules.ai.domain.entity;
 
-import java.util.List;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
 
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import com.izpan.modules.ai.domain.dto.chat.AiChatRequestDTO;
-import com.izpan.modules.ai.domain.dto.chat.AiChatResponseDTO;
+import java.time.LocalDateTime;
 
 /**
- * AI聊天 Service 服务接口层
+ * AI配置实体
  *
  * @Author payne.zhuang <paynezhuang@gmail.com>
  * @ProjectName panis-boot
- * @ClassName com.izpan.modules.ai.service.IAiChatService
+ * @ClassName com.izpan.modules.ai.domain.entity.AiConfig
  * @CreateTime 2024-12-20
  */
-public interface IAiChatService {
+@Data
+@TableName("ai_config")
+public class AiConfig {
 
-    SseEmitter streamChat(AiChatRequestDTO request);
+    @TableId(type = IdType.AUTO)
+    private Long id;
 
-    List<String> getAvailableModels();
+    private String configKey;
 
-    void saveChatHistory(String sessionId, String role, String content, Integer tokensUsed, Long processingTime);
+    private String configValue;
 
-    void updateSessionLastActiveTime(String sessionId, Long userId, String model);
+    private String configType;
 
-    void updateSessionLastActiveTime(String sessionId, Long userId, String model, String title);
+    private String description;
 
-    void clearSessionHistory(String sessionId);
+    private LocalDateTime createTime;
+
+    private LocalDateTime updateTime;
 }
