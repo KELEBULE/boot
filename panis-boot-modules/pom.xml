@@ -20,5 +20,15 @@
             <groupId>com.izpan</groupId>
             <artifactId>panis-boot-infrastructure</artifactId>
         </dependency>
+
+        <!-- Apache Tika 文件解析 -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-parsers-standard-package</artifactId>
+        </dependency>
     </dependencies>
 </project>

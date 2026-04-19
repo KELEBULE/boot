@@ -197,13 +197,6 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                 if (StringUtils.isNotBlank(workOrderFlowDTO.getSpareParts())) {
                     updateWorkOrder.setSpareParts(workOrderFlowDTO.getSpareParts());
                 }
-            } else if (toStatus == 3) {
-                actionType = 6;
-                updateWorkOrder.setReviewerId(getCurrentUserId());
-                if (StringUtils.isNotBlank(workOrderFlowDTO.getReviewResult())) {
-                    updateWorkOrder.setReviewResult(workOrderFlowDTO.getReviewResult());
-                }
-                updateWorkOrder.setReviewTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             } else if (toStatus == 4) {
                 actionType = 7;
             }
@@ -236,6 +229,58 @@ public class WorkOrderServiceImpl extends ServiceImpl<WorkOrderMapper, WorkOrder
                     .fromAssignee(fromAssignee)
                     .toAssignee(toAssignee)
                     .actionRemark(workOrderFlowDTO.getRemark())
+                    .operatorId(getCurrentUserId())
+                    .createTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                    .build();
+            saveWorkOrderLog(workOrderLog);
+        }
+
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public boolean reviewWorkOrder(WorkOrderFlowDTO workOrderFlowDTO) {
+        WorkOrder existWorkOrder = baseMapper.selectById(workOrderFlowDTO.getOrderId());
+        if (existWorkOrder == null) {
+            throw new BizException("工单不存在");
+        }
+
+        if (existWorkOrder.getOrderStatus() != 2) {
+            throw new BizException("工单状态不是审核中，无法审核");
+        }
+
+        Integer reviewStatus = workOrderFlowDTO.getReviewStatus();
+        if (reviewStatus == null) {
+            throw new BizException("审核状态不能为空");
+        }
+
+        Integer fromStatus = existWorkOrder.getOrderStatus();
+        Integer toStatus = reviewStatus == 1 ? 3 : 0;
+
+        WorkOrder updateWorkOrder = new WorkOrder();
+        updateWorkOrder.setOrderId(workOrderFlowDTO.getOrderId());
+        updateWorkOrder.setOrderStatus(toStatus);
+        updateWorkOrder.setReviewerId(getCurrentUserId());
+        updateWorkOrder.setReviewTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
+        if (StringUtils.isNotBlank(workOrderFlowDTO.getReviewRemark())) {
+            updateWorkOrder.setReviewResult(workOrderFlowDTO.getReviewRemark());
+        }
+
+        updateWorkOrder.setUpdateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
+        boolean result = updateById(updateWorkOrder);
+
+        if (result) {
+            int actionType = reviewStatus == 1 ? 6 : 9;
+            WorkOrderLog workOrderLog = WorkOrderLog.builder()
+                    .orderId(workOrderFlowDTO.getOrderId())
+                    .orderCode(existWorkOrder.getOrderCode())
+                    .actionType(actionType)
+                    .fromStatus(fromStatus)
+                    .toStatus(toStatus)
+                    .actionRemark(workOrderFlowDTO.getReviewRemark())
                     .operatorId(getCurrentUserId())
                     .createTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                     .build();

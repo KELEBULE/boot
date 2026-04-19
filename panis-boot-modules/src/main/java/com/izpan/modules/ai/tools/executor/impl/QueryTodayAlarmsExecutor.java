@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class QueryTodayAlarmsExecutor implements IAiToolExecutor {
 
-    private static final String REQUIRED_PERMISSION = "data:alarm:page";
+    private static final String REQUIRED_PERMISSION = "alarm:device:page";
 
     private final DeviceAlarmMapper deviceAlarmMapper;
 

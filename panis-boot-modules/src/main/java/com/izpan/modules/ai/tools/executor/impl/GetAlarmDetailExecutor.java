@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class GetAlarmDetailExecutor implements IAiToolExecutor {
 
-    private static final String REQUIRED_PERMISSION = "data:alarm:get";
+    private static final String REQUIRED_PERMISSION = "alarm:device:get";
 
     private final DeviceAlarmMapper deviceAlarmMapper;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

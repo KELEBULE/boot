@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.izpan.modules.ai.tools.domain.AiToolResult;
 import com.izpan.modules.ai.tools.executor.IAiToolExecutor;
+import com.izpan.modules.ai.tools.util.AiToolPermissionChecker;
 import com.izpan.modules.equipment.domain.entity.FactoryDevice;
 import com.izpan.modules.equipment.repository.mapper.FactoryDeviceMapper;
 
@@ -24,6 +25,7 @@ public class QueryFaultDevicesExecutor implements IAiToolExecutor {
 
     private final FactoryDeviceMapper deviceMapper;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final String REQUIRED_PERMISSION = "factory:device:page";
 
     @Override
     public String getToolName() {
@@ -32,9 +34,12 @@ public class QueryFaultDevicesExecutor implements IAiToolExecutor {
 
     @Override
     public AiToolResult execute(Map<String, Object> arguments) {
+        if (!AiToolPermissionChecker.hasPermission(REQUIRED_PERMISSION)) {
+            return AiToolResult.failure(getToolName(), AiToolPermissionChecker.getPermissionDeniedMessage(REQUIRED_PERMISSION));
+        }
         long startTime = System.currentTimeMillis();
         try {
-            int limit = arguments.containsKey("limit") 
+            int limit = arguments.containsKey("limit")
                     ? ((Number) arguments.get("limit")).intValue() : 20;
 
             LambdaQueryWrapper<FactoryDevice> queryWrapper = new LambdaQueryWrapper<>();

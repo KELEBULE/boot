@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.izpan.common.api.Result;
@@ -114,8 +115,9 @@ public class AiChatController {
     @PostMapping("/file/upload")
     @Operation(operationId = "6", summary = "上传文件")
     public Result<List<String>> uploadFiles(
-            @Parameter(description = "文件上传对象", required = true) @Valid @RequestBody AiFileUploadDTO uploadDTO) {
-        return Result.data(aiChatFacade.uploadFiles(uploadDTO));
+            @Parameter(description = "文件列表", required = true) @RequestParam("files") List<MultipartFile> files,
+            @Parameter(description = "会话ID") @RequestParam(required = false) String sessionId) {
+        return Result.data(aiChatFacade.uploadFiles(files, sessionId));
     }
 
     @DeleteMapping("/file")

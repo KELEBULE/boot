@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.izpan.modules.ai.tools.domain.AiToolResult;
 import com.izpan.modules.ai.tools.executor.IAiToolExecutor;
+import com.izpan.modules.ai.tools.util.AiToolPermissionChecker;
 import com.izpan.modules.alarm.service.IDeviceAlarmService;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GetDeviceAlarmTopExecutor implements IAiToolExecutor {
 
     private final IDeviceAlarmService deviceAlarmService;
+    private static final String REQUIRED_PERMISSION = "alarm:device:page";
 
     @Override
     public String getToolName() {
@@ -27,6 +29,9 @@ public class GetDeviceAlarmTopExecutor implements IAiToolExecutor {
 
     @Override
     public AiToolResult execute(Map<String, Object> arguments) {
+        if (!AiToolPermissionChecker.hasPermission(REQUIRED_PERMISSION)) {
+            return AiToolResult.failure(getToolName(), AiToolPermissionChecker.getPermissionDeniedMessage(REQUIRED_PERMISSION));
+        }
         long startTime = System.currentTimeMillis();
         try {
             int limit = arguments.containsKey("limit") 

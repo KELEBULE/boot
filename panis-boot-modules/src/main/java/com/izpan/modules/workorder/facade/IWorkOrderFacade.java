@@ -75,6 +75,14 @@ public interface IWorkOrderFacade {
     boolean flowWorkOrder(WorkOrderFlowDTO workOrderFlowDTO);
 
     /**
+     * 审核工单
+     *
+     * @param workOrderFlowDTO 审核对象
+     * @return 结果
+     */
+    boolean reviewWorkOrder(WorkOrderFlowDTO workOrderFlowDTO);
+
+    /**
      * 获取工单流转日志
      *
      * @param orderId 工单ID

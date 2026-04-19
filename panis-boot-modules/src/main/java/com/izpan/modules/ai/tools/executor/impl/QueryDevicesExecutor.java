@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class QueryDevicesExecutor implements IAiToolExecutor {
 
-    private static final String REQUIRED_PERMISSION = "equipment:device:page";
+    private static final String REQUIRED_PERMISSION = "factory:device:page";
 
     private final FactoryDeviceMapper deviceMapper;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

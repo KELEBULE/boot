@@ -16,41 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.izpan.modules.ai.facade;
-
-import java.util.List;
+package com.izpan.modules.ai.service;
 
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import com.izpan.modules.ai.domain.dto.chat.AiChatRequestDTO;
-import com.izpan.modules.ai.domain.dto.chat.AiChatResponseDTO;
-import com.izpan.modules.ai.domain.dto.file.AiFileDeleteDTO;
-import com.izpan.modules.ai.domain.dto.file.AiFileUploadDTO;
-import com.izpan.modules.ai.domain.vo.AiChatVO;
-import com.izpan.modules.ai.domain.vo.AiSessionVO;
 
 /**
- * AI聊天 门面接口层
+ * AI文件解析 Service 服务接口层
  *
  * @Author payne.zhuang <paynezhuang@gmail.com>
  * @ProjectName panis-boot
- * @ClassName com.izpan.modules.ai.facade.IAiChatFacade
+ * @ClassName com.izpan.modules.ai.service.IAiFileParseService
  * @CreateTime 2024-12-20
  */
-public interface IAiChatFacade {
+public interface IAiFileParseService {
 
-    SseEmitter streamChat(AiChatRequestDTO request);
-
-    List<AiChatVO> getSessionHistory(String sessionId);
-
-    List<AiSessionVO> getSessionList(Long userId);
-
-    List<String> getAvailableModels();
-
-    List<String> uploadFiles(List<MultipartFile> files, String sessionId);
-
-    boolean deleteFiles(AiFileDeleteDTO deleteDTO);
-
-    boolean clearSession(String sessionId);
+    String parseFile(MultipartFile file) throws Exception;
 }

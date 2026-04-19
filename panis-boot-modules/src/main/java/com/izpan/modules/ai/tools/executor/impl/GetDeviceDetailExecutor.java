@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class GetDeviceDetailExecutor implements IAiToolExecutor {
 
-    private static final String REQUIRED_PERMISSION = "equipment:device:get";
+    private static final String REQUIRED_PERMISSION = "factory:device:get";
 
     private final IFactoryDeviceService deviceService;
 

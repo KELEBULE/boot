@@ -94,6 +94,13 @@ public class WorkOrderController {
         return Result.status(workOrderFacade.flowWorkOrder(workOrderFlowDTO));
     }
 
+    @PostMapping("/review")
+    @SaCheckPermission("device:work:order:review")
+    @Operation(summary = "审核工单（审核通过、审核不通过）")
+    public Result<Boolean> review(@Parameter(description = "审核对象") @RequestBody @Valid WorkOrderFlowDTO workOrderFlowDTO) {
+        return Result.status(workOrderFacade.reviewWorkOrder(workOrderFlowDTO));
+    }
+
     @GetMapping("/logs/{orderId}")
     @SaCheckPermission("device:work:order:logs")
     @Operation(summary = "获取工单流转日志")

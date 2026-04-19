@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class QueryUnconfirmedAlarmsExecutor implements IAiToolExecutor {
 
-    private static final String REQUIRED_PERMISSION = "data:alarm:page";
+    private static final String REQUIRED_PERMISSION = "alarm:device:page";
 
     private final DeviceAlarmMapper deviceAlarmMapper;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

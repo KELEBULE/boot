@@ -20,7 +20,7 @@ package com.izpan.modules.ai.service;
 
 import java.util.List;
 
-import com.izpan.modules.ai.domain.dto.file.AiFileUploadDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * AI文件 Service 服务接口层
@@ -32,7 +32,7 @@ import com.izpan.modules.ai.domain.dto.file.AiFileUploadDTO;
  */
 public interface IAiFileService {
 
-    List<String> uploadFiles(AiFileUploadDTO uploadDTO);
+    List<String> uploadFiles(List<MultipartFile> files, String sessionId);
 
     void deleteFiles(List<Long> ids);
 }

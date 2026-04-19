@@ -71,4 +71,9 @@ public class AiFileUpload extends BaseEntity {
      */
     private String sessionId;
 
+    /**
+     * 文件解析内容
+     */
+    private String parsedContent;
+
 }

@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -126,8 +127,8 @@ public class AiChatFacadeImpl implements IAiChatFacade {
     }
 
     @Override
-    public List<String> uploadFiles(AiFileUploadDTO uploadDTO) {
-        return aiFileService.uploadFiles(uploadDTO);
+    public List<String> uploadFiles(List<MultipartFile> files, String sessionId) {
+        return aiFileService.uploadFiles(files, sessionId);
     }
 
     @Override

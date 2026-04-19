@@ -97,6 +97,13 @@ public class GetWorkOrderDetailExecutor implements IAiToolExecutor {
             result.put("deviceName", order.getDeviceName());
             result.put("deviceId", order.getDeviceId());
             result.put("alarmId", order.getAlarmId());
+            result.put("creatorName", order.getCreatorName());
+            result.put("assigneeId", order.getAssigneeId());
+            result.put("assigneeName", order.getAssigneeName());
+            result.put("processorId", order.getProcessorId());
+            result.put("processorName", order.getProcessorName());
+            result.put("reviewerId", order.getReviewerId());
+            result.put("reviewerName", order.getReviewerName());
 
             return AiToolResult.success(getToolName(), result, System.currentTimeMillis() - startTime);
         } catch (NumberFormatException e) {

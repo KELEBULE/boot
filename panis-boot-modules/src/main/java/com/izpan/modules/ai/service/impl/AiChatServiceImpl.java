@@ -41,14 +41,17 @@ import com.izpan.modules.ai.client.OllamaClient;
 import com.izpan.modules.ai.domain.dto.chat.AiChatRequestDTO;
 import com.izpan.modules.ai.domain.entity.AiChatHistory;
 import com.izpan.modules.ai.domain.entity.AiChatSession;
+import com.izpan.modules.ai.domain.entity.AiFileUpload;
 import com.izpan.modules.ai.repository.mapper.AiChatHistoryMapper;
 import com.izpan.modules.ai.repository.mapper.AiChatSessionMapper;
+import com.izpan.modules.ai.repository.mapper.AiFileUploadMapper;
 import com.izpan.modules.ai.service.IAiChatService;
 import com.izpan.modules.ai.service.IAiConfigService;
 import com.izpan.modules.ai.tools.domain.AiToolDefinition;
 import com.izpan.modules.ai.tools.domain.AiToolResult;
 import com.izpan.modules.ai.tools.executor.AiToolExecutorDispatcher;
 import com.izpan.modules.ai.tools.registry.AiToolRegistry;
+import com.izpan.modules.ai.tools.util.AiToolPermissionChecker;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +80,9 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
 
     @Autowired
     private AiChatHistoryMapper historyMapper;
+
+    @Autowired
+    private AiFileUploadMapper fileUploadMapper;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -117,6 +123,8 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
         final String model = request.getModel();
         final String userMessage = request.getMessage();
 
+        final Set<String> userPermissions = AiToolPermissionChecker.getCurrentUserPermissions();
+
         updateSessionLastActiveTime(actualSessionId, userId, model, userMessage);
         saveChatHistory(actualSessionId, "user", request.getMessage(), null, null);
 
@@ -124,6 +132,8 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
 
         CompletableFuture.runAsync(() -> {
             try {
+                AiToolPermissionChecker.setPermissions(userPermissions);
+                
                 if (useTools) {
                     streamChatWithTools(request, emitter, actualSessionId, userMessage, model);
                 } else {
@@ -136,6 +146,8 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
             } catch (Exception e) {
                 log.error("流式聊天失败", e);
                 emitter.completeWithError(e);
+            } finally {
+                AiToolPermissionChecker.clearPermissions();
             }
         });
 
@@ -365,8 +377,40 @@ public class AiChatServiceImpl extends ServiceImpl<AiChatHistoryMapper, AiChatHi
             ));
         }
 
-        messages.add(Map.of("role", "user", "content", userMessage));
+        String enhancedMessage = enhanceMessageWithFiles(sessionId, userMessage);
+        messages.add(Map.of("role", "user", "content", enhancedMessage));
         return messages;
+    }
+
+    private String enhanceMessageWithFiles(String sessionId, String userMessage) {
+        if (sessionId == null || sessionId.isEmpty()) {
+            return userMessage;
+        }
+
+        LambdaQueryWrapper<AiFileUpload> queryWrapper = new LambdaQueryWrapper<AiFileUpload>()
+                .eq(AiFileUpload::getSessionId, sessionId)
+                .orderByDesc(AiFileUpload::getCreateTime);
+
+        List<AiFileUpload> files = fileUploadMapper.selectList(queryWrapper);
+
+        if (files == null || files.isEmpty()) {
+            return userMessage;
+        }
+
+        StringBuilder enhancedMessage = new StringBuilder();
+        enhancedMessage.append(userMessage).append("\n\n");
+        enhancedMessage.append("【上传的文件内容】\n");
+
+        for (AiFileUpload file : files) {
+            enhancedMessage.append("\n--- 文件: ").append(file.getFileName()).append(" ---\n");
+            if (file.getParsedContent() != null && !file.getParsedContent().isEmpty()) {
+                enhancedMessage.append(file.getParsedContent()).append("\n");
+            } else {
+                enhancedMessage.append("(文件内容为空或无法解析)\n");
+            }
+        }
+
+        return enhancedMessage.toString();
     }
 
     private String buildSystemPrompt() {

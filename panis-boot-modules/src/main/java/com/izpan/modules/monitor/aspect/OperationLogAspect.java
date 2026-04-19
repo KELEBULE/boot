@@ -112,7 +112,25 @@ public class OperationLogAspect {
             if (arg instanceof ServletRequest || arg instanceof ServletResponse || arg instanceof MultipartFile || arg instanceof MultipartFile[]) {
                 continue;
             }
-            arguments.add(GsonUtil.toJson(arg));
+            // 检查是否是包含MultipartFile的集合
+            if (arg instanceof Iterable<?> iterable) {
+                boolean hasMultipartFile = false;
+                for (Object item : iterable) {
+                    if (item instanceof MultipartFile) {
+                        hasMultipartFile = true;
+                        break;
+                    }
+                }
+                if (hasMultipartFile) {
+                    continue;
+                }
+            }
+            try {
+                arguments.add(GsonUtil.toJson(arg));
+            } catch (Exception e) {
+                // 如果序列化失败，记录参数类型而不是内容
+                arguments.add("[无法序列化的参数: " + arg.getClass().getSimpleName() + "]");
+            }
         }
 
         // ================= 操作日志 Begin =================

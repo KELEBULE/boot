@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class QueryLoginLogsExecutor implements IAiToolExecutor {
 
-    private static final String REQUIRED_PERMISSION = "monitor:logs:login:page";
+    private static final String REQUIRED_PERMISSION = "mon:logs:login:page";
 
     private final MonLogsLoginMapper loginLogMapper;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

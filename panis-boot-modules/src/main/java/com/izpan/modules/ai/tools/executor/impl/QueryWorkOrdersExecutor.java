@@ -85,6 +85,9 @@ public class QueryWorkOrdersExecutor implements IAiToolExecutor {
             map.put("faultDescription", order.getFaultDescription());
             map.put("createTime", order.getCreateTime());
             map.put("planEndTime", order.getPlanEndTime());
+            map.put("deviceId", order.getDeviceId());
+            map.put("assigneeId", order.getAssigneeId());
+            map.put("processorId", order.getProcessorId());
             return map;
         }).toList();
     }

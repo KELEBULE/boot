@@ -85,6 +85,12 @@ public class WorkOrderFacadeImpl implements IWorkOrderFacade {
     }
 
     @Override
+    @Transactional
+    public boolean reviewWorkOrder(WorkOrderFlowDTO workOrderFlowDTO) {
+        return workOrderService.reviewWorkOrder(workOrderFlowDTO);
+    }
+
+    @Override
     public List<WorkOrderLogVO> getWorkOrderLogs(Long orderId) {
         List<WorkOrderLog> logs = workOrderService.getWorkOrderLogs(orderId);
         return logs.stream()

@@ -54,8 +54,11 @@ public class WorkOrderFlowDTO implements Serializable {
     @Schema(description = "更换备件")
     private String spareParts;
 
-    @Schema(description = "审核结果")
-    private String reviewResult;
+    @Schema(description = "审核状态 0-审核不通过 1-审核通过")
+    private Integer reviewStatus;
+
+    @Schema(description = "审核备注")
+    private String reviewRemark;
 
     @Schema(description = "评价分数(1-5)")
     private Integer evaluationScore;

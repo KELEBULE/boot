@@ -21,9 +21,9 @@ package com.izpan.modules.ai.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.izpan.infrastructure.holder.GlobalUserHolder;
-import com.izpan.modules.ai.domain.dto.file.AiFileUploadDTO;
 import com.izpan.modules.ai.domain.entity.AiFileUpload;
 import com.izpan.modules.ai.repository.mapper.AiFileUploadMapper;
+import com.izpan.modules.ai.service.IAiFileParseService;
 import com.izpan.modules.ai.service.IAiFileService;
 import com.izpan.starter.oss.service.OssService;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,27 +49,37 @@ public class AiFileServiceImpl extends ServiceImpl<AiFileUploadMapper, AiFileUpl
     @Autowired
     private OssService ossService;
 
+    @Autowired
+    private IAiFileParseService fileParseService;
+
     @Override
-    public List<String> uploadFiles(AiFileUploadDTO uploadDTO) {
+    public List<String> uploadFiles(List<MultipartFile> files, String sessionId) {
         List<String> fileUrls = new ArrayList<>();
 
-        if (uploadDTO.getFileNames() != null) {
-            for (String fileName : uploadDTO.getFileNames()) {
+        if (files != null && !files.isEmpty()) {
+            for (MultipartFile file : files) {
                 try {
-                    String fileUrl = ossService.putFile("ai-files", fileName, new ByteArrayInputStream(new byte[0])).getPath();
+                    String fileName = file.getOriginalFilename();
+                    log.info("开始上传文件: {}, 大小: {} bytes", fileName, file.getSize());
+
+                    String fileUrl = ossService.putFile("ai-files", fileName, file.getInputStream()).getPath();
                     fileUrls.add(fileUrl);
+
+                    String parsedContent = fileParseService.parseFile(file);
 
                     AiFileUpload fileUpload = AiFileUpload.builder()
                             .fileName(fileName)
                             .fileUrl(fileUrl)
-                            .fileSize(0L)
+                            .fileSize(file.getSize())
                             .fileType(getFileType(fileName))
-                            .sessionId(uploadDTO.getSessionId())
+                            .sessionId(sessionId)
+                            .parsedContent(parsedContent)
                             .build();
 
                     baseMapper.insert(fileUpload);
+                    log.info("文件上传成功: {}", fileName);
                 } catch (Exception e) {
-                    log.error("文件上传失败: {}", fileName, e);
+                    log.error("文件上传失败: {}", file.getOriginalFilename(), e);
                 }
             }
         }

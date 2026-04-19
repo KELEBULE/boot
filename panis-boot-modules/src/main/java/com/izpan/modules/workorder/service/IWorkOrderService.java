@@ -83,6 +83,14 @@ public interface IWorkOrderService extends IService<WorkOrder> {
     boolean flowWorkOrder(WorkOrderFlowDTO workOrderFlowDTO);
 
     /**
+     * 审核工单（审核通过、审核不通过）
+     *
+     * @param workOrderFlowDTO 审核对象
+     * @return 结果
+     */
+    boolean reviewWorkOrder(WorkOrderFlowDTO workOrderFlowDTO);
+
+    /**
      * 获取工单流转日志
      *
      * @param orderId 工单ID
